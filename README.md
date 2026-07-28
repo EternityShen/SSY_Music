@@ -43,8 +43,6 @@ api接口:
 // http .........   /api/songs/{id}/image                    获取图片
 // http .........   /api/songs/{id}/data                     获取歌曲数据
 
-写的很简陋，但勉强够用吧
-
 
 ### Client
 这个没什么可以讲的

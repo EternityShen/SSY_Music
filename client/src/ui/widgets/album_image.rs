@@ -13,9 +13,9 @@ pub enum AlbumImageMessage {
 impl AlbumImage {
     /// 创建
     pub fn new() -> Self {
-        let image_handle = iced::widget::image::Handle::from_path(
-            "/home/eternity/Music/专辑图片/无法解析:未知.jpeg",
-        );
+        let default_image =
+            include_bytes!("/home/eternity/Music/专辑图片/无法解析:未知.jpeg").to_vec();
+        let image_handle = iced::widget::image::Handle::from_bytes(default_image);
         Self {
             image_handle,
             title: "Eternity".to_string(),
