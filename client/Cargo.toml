@@ -1,0 +1,16 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+iced = {version = "0.14.0", features = ["canvas","image","tokio","advanced"]}
+logger = {workspace = true}
+tokio = {workspace = true}
+rodio = "0.22.2"
+image = "0.25.10"
+serde = { version = "1.0", features = ["derive"] }
+json = "0.12.4"
+serde_json = "1.0"
+reqwest = { version = "0.13.4", features = ["json","stream"] }
+futures-util = "0.3.33"

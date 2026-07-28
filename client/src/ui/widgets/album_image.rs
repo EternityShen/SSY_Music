@@ -1,0 +1,60 @@
+/// 专辑图片
+pub struct AlbumImage {
+    image_handle: iced::widget::image::Handle,
+    title: String,
+}
+
+/// 消息
+pub enum AlbumImageMessage {
+    Set(iced::widget::image::Handle),
+    SetTitle(String),
+}
+
+impl AlbumImage {
+    /// 创建
+    pub fn new() -> Self {
+        let image_handle = iced::widget::image::Handle::from_path(
+            "/home/eternity/Music/专辑图片/无法解析:未知.jpeg",
+        );
+        Self {
+            image_handle,
+            title: "Eternity".to_string(),
+        }
+    }
+
+    /// 更新
+    pub fn update(&mut self, message: AlbumImageMessage) {
+        match message {
+            AlbumImageMessage::Set(handle) => {
+                self.image_handle = handle;
+            }
+            AlbumImageMessage::SetTitle(str) => {
+                self.title = str;
+            }
+        }
+    }
+
+    /// 渲染
+    pub fn view(&self) -> iced::Element<'_, AlbumImageMessage> {
+        let image = iced::widget::Image::new(self.image_handle.clone())
+            .content_fit(iced::ContentFit::Cover)
+            .width(260)
+            .height(260);
+
+        let title = iced::widget::text(format!("[{}]", self.title))
+            .size(30)
+            .color(iced::Color::from_rgb(0.9, 0.6, 0.6));
+
+        iced::widget::column![image, title]
+            .spacing(10)
+            .align_x(iced::Alignment::Center)
+            .into()
+    }
+}
+
+impl Default for AlbumImage {
+    /// 应付语法服务器
+    fn default() -> Self {
+        Self::new()
+    }
+}

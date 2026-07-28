@@ -1,0 +1,8 @@
+[workspace]
+members = ["client", "server", "logger"]
+resolver = "3"
+
+[workspace.dependencies]
+logger = {path = "./logger/"}
+tokio = { version = "1", features = ["full","rt-multi-thread", "macros"] }
+
