@@ -17,6 +17,7 @@ pub enum MusicLyricMessage {
     Time(f32),
 }
 
+/// 时间转换
 fn parse_lrc_time(time_str: &str) -> Option<f32> {
     let parts: Vec<&str> = time_str.split(':').collect();
     if parts.len() != 2 {
@@ -29,6 +30,7 @@ fn parse_lrc_time(time_str: &str) -> Option<f32> {
     Some(minutes * 60.0 + seconds)
 }
 
+/// 歌词解析
 pub async fn get_fmt_lyrics(
     api: std::sync::Arc<crate::api::request::MusicClient>,
     id: u64,

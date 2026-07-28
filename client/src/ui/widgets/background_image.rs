@@ -16,8 +16,7 @@ pub enum BackGroundImageMessage {
 impl Default for BackGroundImage {
     /// 默认构造
     fn default() -> Self {
-        // 包含一张内置的默认图片字节（比如用 include_bytes! 嵌入一张默认图）
-        // 或者这里先放一个空 Vec，但 load_and_blur 需要处理空数据的情况
+        // 一张内置的默认图片字节
         let default_bytes =
             include_bytes!("/home/eternity/Music/专辑图片/无法解析:未知.jpeg").to_vec();
         let (_, blurred) = Self::load_and_blur(default_bytes.clone());
