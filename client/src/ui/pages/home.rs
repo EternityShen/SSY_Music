@@ -1,3 +1,5 @@
+// 简单到炸飞zako的代码,不需要注释
+
 pub struct HomePage {
     title: String,
 }

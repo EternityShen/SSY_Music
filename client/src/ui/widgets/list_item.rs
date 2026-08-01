@@ -1,6 +1,7 @@
 use crate::api;
 use iced::widget::button;
 
+/// 列表项
 pub struct ListItem {
     id: u64,
     title: String,
@@ -10,12 +11,14 @@ pub struct ListItem {
     duration: f64,
 }
 
+/// 消息
 #[derive(Clone)]
 pub enum ListItemMessage {
     OnPress(u64),
 }
 
 impl ListItem {
+    /// 创建
     pub fn new(data: api::data::Song, image_data: Vec<u8>) -> Self {
         let image = iced::widget::image::Handle::from_bytes(image_data);
         Self {
@@ -28,12 +31,14 @@ impl ListItem {
         }
     }
 
+    /// 更新
     pub fn update(&mut self, message: ListItemMessage) {
         match message {
             ListItemMessage::OnPress(_id) => {}
         }
     }
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'static, ListItemMessage> {
         let album_image = iced::widget::image::Image::new(self.image.clone())
             .width(50)

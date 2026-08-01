@@ -68,6 +68,7 @@ impl PlayerManger {
         self.is_play = false;
     }
 
+    /// 跳转
     fn seek(&self, time: u64) {
         let _ = self
             .playersender
@@ -77,6 +78,7 @@ impl PlayerManger {
             .try_send(super::event::player::PlayerEvent::Seek(time));
     }
 
+    /// 快进5s
     fn seek_add_5(&self) {
         let _ = self
             .playersender
@@ -86,6 +88,7 @@ impl PlayerManger {
             .try_send(super::event::player::PlayerEvent::Seek(self.play_time + 5));
     }
 
+    /// 倒退5s
     fn seek_subtract_5(&self) {
         let _ = self
             .playersender
@@ -98,12 +101,14 @@ impl PlayerManger {
     }
 }
 
+/// 页面枚举
 enum Page {
     Home,
     MusicList,
     Player,
 }
 
+/// 整个ui的上帝
 pub struct App {
     api: std::sync::Arc<api::request::MusicClient>,
     background: widgets::background_image::BackGroundImage,
@@ -114,6 +119,7 @@ pub struct App {
     player_manger: PlayerManger,
 }
 
+/// 消息
 pub enum AppMessage {
     BackGroundMessage(widgets::background_image::BackGroundImageMessage),
     MusicListMessage(pages::music_list::MusicListPageMessage),
@@ -199,6 +205,7 @@ fn updata_song(api: std::sync::Arc<api::request::MusicClient>, id: u64) -> iced:
 }
 
 impl App {
+    /// 创建
     pub fn new() -> Self {
         let mut logger = logger::Logger::new("./client.log");
         logger.clear();
@@ -231,6 +238,8 @@ impl App {
                 self.background.update(message);
             }
 
+            // -------------------------------------------------------------------------
+            // 页面
             AppMessage::MusicListMessage(message) => {
                 let (task, event) = self.music_list_page.update(message);
                 let page_task = task.map(AppMessage::MusicListMessage);
@@ -266,6 +275,8 @@ impl App {
                 self.home_page.updata(message);
             }
 
+            // -------------------------------------------------------------------------
+            // 键盘
             AppMessage::KeyPressed(key) => match key {
                 iced::keyboard::Key::Named(iced::keyboard::key::Named::Tab) => match self.page {
                     Page::Home => self.page = Page::MusicList,
@@ -288,6 +299,8 @@ impl App {
                 _ => {}
             },
 
+            // -------------------------------------------------------------------------
+            // 网络事件
             AppMessage::Songs(songs) => {
                 let (task, _event) =
                     self.music_list_page
@@ -321,6 +334,8 @@ impl App {
                 }
             }
 
+            // -------------------------------------------------------------------------
+            // 订阅发送的事件
             AppMessage::AppEventMessage(event) => match event {
                 event::app::AppEvent::Ready(sender) => {
                     self.player_manger.set_sender(sender);
@@ -343,6 +358,7 @@ impl App {
         iced::Task::none()
     }
 
+    /// 订阅
     pub fn subscription(&self) -> iced::Subscription<AppMessage> {
         iced::Subscription::batch(vec![
             iced::Subscription::run(player_work).map(AppMessage::AppEventMessage),
@@ -355,6 +371,7 @@ impl App {
         ])
     }
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'_, AppMessage> {
         let background = self.background.view().map(AppMessage::BackGroundMessage);
 
@@ -378,6 +395,7 @@ impl App {
     }
 }
 
+/// player订阅的构建器
 fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
     iced::stream::channel(100, async |mut output| {
         let (sender, mut receiver) =
@@ -431,6 +449,7 @@ fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
 }
 
 impl Default for App {
+    /// 应付
     fn default() -> Self {
         Self::new()
     }

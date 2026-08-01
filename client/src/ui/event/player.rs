@@ -1,3 +1,4 @@
+/// 播放器事件
 pub enum PlayerEvent {
     Play,
     Pause,

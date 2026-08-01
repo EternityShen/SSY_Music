@@ -4,10 +4,12 @@ use crate::api;
 use crate::ui::widgets;
 use crate::ui::widgets::list_item::ListItemMessage;
 
+/// 音乐列表页面
 pub struct MusicListPage {
     items: Vec<widgets::list_item::ListItem>,
 }
 
+///  消息
 #[derive(Clone)]
 pub enum MusicListPageMessage {
     OnPress(ListItemMessage),
@@ -15,16 +17,20 @@ pub enum MusicListPageMessage {
     Songs(Vec<(api::data::Song, Vec<u8>)>),
 }
 
+/// 事件
 pub enum MusicListPageEvent {
     SongSelected(u64),
     RefreshRequested,
 }
 
 impl MusicListPage {
+    /// 创建
     pub fn new() -> Self {
         Self { items: Vec::new() }
     }
 
+    /// 更新
+    ///     -> (iced::Task<MusicListPageMessage>, Option<MusicListPageEvent>)
     pub fn update(
         &mut self,
         message: MusicListPageMessage,
@@ -56,6 +62,7 @@ impl MusicListPage {
         }
     }
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'_, MusicListPageMessage> {
         let list_content =
             self.items
@@ -144,6 +151,7 @@ impl MusicListPage {
 }
 
 impl Default for MusicListPage {
+    /// 应付
     fn default() -> Self {
         Self::new()
     }

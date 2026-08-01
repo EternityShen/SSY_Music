@@ -1,22 +1,26 @@
 use crate::ui::widgets;
 
+/// 音乐播放器页面
 pub struct PlayerPage {
     album: widgets::album::Album,
     progress_bar: widgets::progress_bar::ProgressBar,
     info: widgets::info::Info,
 }
 
+/// 消息
 pub enum PlayerPageMessage {
     AlbumMessage(widgets::album::AlbumMessage),
     ProgressBarMessage(widgets::progress_bar::ProgressBarMessage),
     InfoMessage(widgets::info::InfoMessage),
 }
 
+/// 事件
 pub enum PlayerPageEvent {
     Seek(u64),
 }
 
 impl PlayerPage {
+    /// 创建
     pub fn new() -> Self {
         let album = widgets::album::Album::default();
         let progress_bar = widgets::progress_bar::ProgressBar::default();
@@ -28,6 +32,8 @@ impl PlayerPage {
         }
     }
 
+    /// 更新
+    ///     -> Option<PlayerPageEvent>
     pub fn update(&mut self, message: PlayerPageMessage) -> Option<PlayerPageEvent> {
         match message {
             PlayerPageMessage::AlbumMessage(message) => {
@@ -51,6 +57,7 @@ impl PlayerPage {
         }
     }
 
+    // 一堆set,不多注释,一看就知道干嘛的
     pub fn set_progress(&mut self, time: u64) {
         self.progress_bar
             .update(widgets::progress_bar::ProgressBarMessage::Seek(time as f32));
@@ -78,6 +85,7 @@ impl PlayerPage {
         self.info.update(widgets::info::InfoMessage::Set(data));
     }
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'_, PlayerPageMessage> {
         let album = self.album.view().map(PlayerPageMessage::AlbumMessage);
         let progress_bar = self
@@ -107,6 +115,7 @@ impl PlayerPage {
 }
 
 impl Default for PlayerPage {
+    /// 应付
     fn default() -> Self {
         Self::new()
     }

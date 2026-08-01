@@ -1,12 +1,15 @@
+/// 背景图片
 pub struct BackGroundImage {
     image_data: Vec<u8>,
     image_handle: iced::widget::image::Handle,
 }
 
+/// 消息
 pub enum BackGroundImageMessage {
     Set(Vec<u8>),
 }
 
+/// 模糊方法
 fn blur(data: Vec<u8>) -> iced::widget::image::Handle {
     let raw_handle = iced::widget::image::Handle::from_bytes(data.clone());
 
@@ -27,6 +30,7 @@ fn blur(data: Vec<u8>) -> iced::widget::image::Handle {
 }
 
 impl BackGroundImage {
+    /// 创建
     pub fn new() -> Self {
         let image = include_bytes!("/home/eternity/Music/专辑图片/无法解析:未知.jpeg").to_vec();
         let image_handle = blur(image.clone());
@@ -36,6 +40,7 @@ impl BackGroundImage {
         }
     }
 
+    /// 更新
     pub fn update(&mut self, message: BackGroundImageMessage) {
         match message {
             BackGroundImageMessage::Set(data) => {
@@ -46,6 +51,7 @@ impl BackGroundImage {
         }
     }
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'_, BackGroundImageMessage> {
         iced::widget::Image::new(self.image_handle.clone())
             .width(iced::Length::Fill)
@@ -54,7 +60,9 @@ impl BackGroundImage {
             .into()
     }
 }
+
 impl Default for BackGroundImage {
+    /// 应付
     fn default() -> Self {
         Self::new()
     }
