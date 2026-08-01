@@ -374,22 +374,29 @@ impl App {
     /// 渲染
     pub fn view(&self) -> iced::Element<'_, AppMessage> {
         let background = self.background.view().map(AppMessage::BackGroundMessage);
+        let middle_layer = iced::widget::container(iced::widget::space::horizontal())
+            .width(iced::Length::Fill)
+            .height(iced::Length::Fill)
+            .style(|_theme: &iced::Theme| iced::widget::container::Style {
+                background: Some(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.4).into()),
+                ..Default::default()
+            });
 
         match self.page {
             Page::Home => {
                 let home_page = self.home_page.view().map(AppMessage::HomePageMessage);
-                iced::widget::stack!(background, home_page).into()
+                iced::widget::stack!(background, middle_layer, home_page).into()
             }
             Page::Player => {
                 let player_page = self.player_page.view().map(AppMessage::PlayerPageMessage);
-                iced::widget::stack!(background, player_page).into()
+                iced::widget::stack!(background, middle_layer, player_page).into()
             }
             Page::MusicList => {
                 let music_list = self
                     .music_list_page
                     .view()
                     .map(AppMessage::MusicListMessage);
-                iced::widget::stack!(background, music_list).into()
+                iced::widget::stack!(background, middle_layer, music_list).into()
             }
         }
     }
