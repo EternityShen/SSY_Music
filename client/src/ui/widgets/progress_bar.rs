@@ -1,17 +1,17 @@
 /// 音乐进度条
-pub struct MusicSlider {
+pub struct ProgressBar {
     slider_value: f32,
     all_value: f32,
 }
 
 /// 消息
 #[derive(Debug, Clone)]
-pub enum MusicSliderMessage {
+pub enum ProgressBarMessage {
     Seek(f32),
     SetAllValue(f32),
 }
 
-impl MusicSlider {
+impl ProgressBar {
     /// 创建
     pub fn new() -> Self {
         Self {
@@ -21,22 +21,22 @@ impl MusicSlider {
     }
 
     /// 更新
-    pub fn update(&mut self, message: MusicSliderMessage) {
+    pub fn update(&mut self, message: ProgressBarMessage) {
         match message {
-            MusicSliderMessage::Seek(value) => {
+            ProgressBarMessage::Seek(value) => {
                 self.slider_value = value;
             }
-            MusicSliderMessage::SetAllValue(value) => {
+            ProgressBarMessage::SetAllValue(value) => {
                 self.all_value = value;
             }
         }
     }
 
     /// 渲染
-    pub fn view(&self) -> iced::Element<'_, MusicSliderMessage> {
+    pub fn view(&self) -> iced::Element<'_, ProgressBarMessage> {
         // 进度条
         let slider = iced::widget::Slider::new(0.0..=self.all_value, self.slider_value, |value| {
-            MusicSliderMessage::Seek(value)
+            ProgressBarMessage::Seek(value)
         })
         .step(1.0_f32)
         .default(10.0_f32)
@@ -112,7 +112,7 @@ impl MusicSlider {
     }
 }
 
-impl Default for MusicSlider {
+impl Default for ProgressBar {
     /// 默认构造,应付语法服务器
     fn default() -> Self {
         Self::new()

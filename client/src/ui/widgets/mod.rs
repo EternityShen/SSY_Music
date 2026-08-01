@@ -1,6 +1,5 @@
-pub mod album_image;
+pub mod album;
 pub mod background_image;
-pub mod music_info;
-pub mod music_list_item;
-pub mod music_lyric;
-pub mod music_slider;
+pub mod info;
+pub mod list_item;
+pub mod progress_bar;

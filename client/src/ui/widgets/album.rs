@@ -1,16 +1,16 @@
 /// 专辑图片
-pub struct AlbumImage {
+pub struct Album {
     image_handle: iced::widget::image::Handle,
     title: String,
 }
 
 /// 消息
-pub enum AlbumImageMessage {
+pub enum AlbumMessage {
     Set(iced::widget::image::Handle),
     SetTitle(String),
 }
 
-impl AlbumImage {
+impl Album {
     /// 创建
     pub fn new() -> Self {
         // 一张内置的默认图片字节
@@ -24,25 +24,25 @@ impl AlbumImage {
     }
 
     /// 更新
-    pub fn update(&mut self, message: AlbumImageMessage) {
+    pub fn update(&mut self, message: AlbumMessage) {
         match message {
-            AlbumImageMessage::Set(handle) => {
+            AlbumMessage::Set(handle) => {
                 self.image_handle = handle;
             }
-            AlbumImageMessage::SetTitle(str) => {
+            AlbumMessage::SetTitle(str) => {
                 self.title = str;
             }
         }
     }
 
     /// 渲染
-    pub fn view(&self) -> iced::Element<'_, AlbumImageMessage> {
+    pub fn view(&self) -> iced::Element<'_, AlbumMessage> {
         let image = iced::widget::Image::new(self.image_handle.clone())
             .content_fit(iced::ContentFit::Cover)
             .width(260)
             .height(260);
 
-        let title = iced::widget::text(format!("[{}]", self.title))
+        let title = iced::widget::text(format!("《{}》", self.title))
             .size(30)
             .color(iced::Color::from_rgb(0.9, 0.6, 0.6));
 
@@ -53,7 +53,7 @@ impl AlbumImage {
     }
 }
 
-impl Default for AlbumImage {
+impl Default for Album {
     /// 应付语法服务器
     fn default() -> Self {
         Self::new()

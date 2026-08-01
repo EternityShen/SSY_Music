@@ -1,14 +1,12 @@
 // 依赖过多,同名函数结构体和方法很多,所以我决定全部的调用都用完整路径(当然,有些我不知道在哪的就直接让Lsp补全了)
 
+use client::ui::app::App;
+
 fn main() {
-    iced::application(
-        client::ui::app_window::ShenEternityMusicAppWindow::default,
-        client::ui::app_window::ShenEternityMusicAppWindow::update,
-        client::ui::app_window::ShenEternityMusicAppWindow::view,
-    )
-    .subscription(client::ui::app_window::ShenEternityMusicAppWindow::subscription)
-    .run()
-    .unwrap()
+    iced::application(App::default, App::update, App::view)
+        .subscription(App::subscription)
+        .run()
+        .unwrap();
 }
 
 // use std::sync::Mutex;

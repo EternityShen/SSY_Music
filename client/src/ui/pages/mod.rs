@@ -1,2 +1,3 @@
+pub mod home;
 pub mod music_list;
-pub mod music_player;
+pub mod player;
