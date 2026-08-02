@@ -99,4 +99,5 @@ cargo run -p ssy-music --release
 
 ## 📄 开源许可
 
-本项目遵循 [MIT License](https://www.google.com/search?q=LICENSE) 开源协议。
+本项目基于 **GNU Affero General Public License v3.0 (AGPL-3.0)** 协议开源。
+完整协议文本请参阅项目根目录下的 [LICENSE](LICENSE) 文件。

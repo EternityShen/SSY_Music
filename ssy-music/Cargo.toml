@@ -3,7 +3,7 @@ name = "ssy-music"
 version = "0.1.0"
 edition = "2024"
 description = "A lightweight music player built with Rust and Iced" 
-license = "MIT"
+license = "AGPL-3.0-only"
 
 [dependencies]
 iced = {version = "0.14.0", features = ["canvas","image","tokio","advanced"]}
