@@ -377,9 +377,11 @@ impl App {
                                 }
                                 PlayMode::Load => {
                                     self.player_manger.load_data.re_load();
-                                    self.music_list_page.set_list_data(
-                                        self.player_manger.load_data.get_all_song_data(),
-                                    );
+                                    let songs_data =
+                                        self.player_manger.load_data.get_all_song_data();
+                                    let song_num = songs_data.len() - 1;
+                                    self.music_list_page.set_list_data(songs_data);
+                                    self.player_manger.list_num = song_num as u64;
                                 }
                             }
                         }
