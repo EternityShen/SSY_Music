@@ -313,6 +313,16 @@ impl App {
     /// 创建
     pub fn new() -> Self {
         let config = crate::config::Config::new();
+
+        let play_mode = match config.play_mode.as_str() {
+            "Load" => PlayMode::Load,
+            "Net" => PlayMode::Net,
+            _ => {
+                eprintln!("配置中的模式错误:{}", config.play_mode);
+                panic!();
+            }
+        };
+
         let mut logger = logger::Logger::new(&config.log_path);
         logger.clear();
         let logger_handle = std::sync::Arc::new(std::sync::Mutex::new(logger));
@@ -329,7 +339,7 @@ impl App {
 
         Self {
             api: api_client,
-            play_mode: PlayMode::Load,
+            play_mode,
             background,
             music_list_page,
             home_page,
