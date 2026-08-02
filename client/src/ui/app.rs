@@ -129,10 +129,10 @@ impl PlayerManger {
             // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
             .unwrap()
             .try_send(super::event::player::PlayerEvent::SetVolume(
-                self.volume + 0.05,
+                (self.volume + 0.05).clamp(0.0, 1.0),
             ));
 
-        self.volume += 0.05;
+        self.volume = (self.volume + 0.05).clamp(0.0, 1.0);
     }
 
     /// 音量-5%
@@ -143,10 +143,10 @@ impl PlayerManger {
             // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
             .unwrap()
             .try_send(super::event::player::PlayerEvent::SetVolume(
-                self.volume - 0.05,
+                (self.volume - 0.05).clamp(0.0, 1.0),
             ));
 
-        self.volume -= 0.05;
+        self.volume = (self.volume - 0.05).clamp(0.0, 1.0);
     }
 }
 
