@@ -94,8 +94,8 @@ impl LoadDate {
     }
 
     pub fn get_all_song_data(&self) -> Vec<super::data::Song> {
-        let songs: Vec<super::data::Song> = self.songs_by_id.values().cloned().collect();
-
+        let mut songs: Vec<super::data::Song> = self.songs_by_id.values().cloned().collect();
+        songs.sort_by_key(|song| song.id);
         songs
     }
 }
