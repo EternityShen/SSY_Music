@@ -2,6 +2,8 @@
 name = "ssy-music"
 version = "0.1.0"
 edition = "2024"
+description = "A lightweight music player built with Rust and Iced" 
+license = "MIT"
 
 [dependencies]
 iced = {version = "0.14.0", features = ["canvas","image","tokio","advanced"]}
@@ -15,3 +17,21 @@ json = "0.12.4"
 serde_json = "1.0"
 reqwest = { version = "0.13.4", features = ["json","stream"] }
 futures-util = "0.3.33"
+dirs = "6.0"
+
+[package.metadata.deb]
+maintainer = "shenternity2008@outlook.com"
+copyright = "2026, ShenEternity shenternity2008@outlook.com"
+extended-description = """\
+SSY-Music 是一个用Rust Iced 构建的轻量级音乐播放器
+"""
+section = "sound"
+priority = "optional"
+
+depends = "libc6, libasound2, libfontconfig1, libx11-6"
+
+assets = [
+    ["target/release/ssy-music", "usr/bin/", "755"],
+    ["assets/ssy-music.desktop", "usr/share/applications/", "644"],
+    ["assets/icon.jpeg", "usr/share/icons/hicolor/256x256/apps/ssy-music.png", "644"],
+]

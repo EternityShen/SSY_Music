@@ -1,0 +1,24 @@
+[Desktop Entry]
+# 应用名称（在系统菜单中显示的名称）
+Name=SSY Music
+# 鼠标悬停时显示的描述
+Comment=A modern music player built with Rust and Iced
+
+# 启动可执行文件的名称或绝对路径
+# 因为 deb 安装后二进制文件会放在 /usr/bin/ 下，直接写文件名即可
+Exec=ssy-music
+
+# 图标名称（不需要写后缀，系统会自动去 hicolor 图标目录匹配）
+Icon=ssy-music
+
+# 是否在终端中运行（GUI 应用填写 false，命令行工具填写 true）
+Terminal=false
+
+# 应用类型（固定为 Application）
+Type=Application
+
+# 软件分类，用于系统菜单的二级分类（多个分类用分号分隔）
+Categories=Audio;Music;Player;AudioVideo;
+
+# 关键字，方便在系统搜索框中快速搜索到
+Keywords=music;player;audio;ssy;

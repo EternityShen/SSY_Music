@@ -11,9 +11,10 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
-        let content =
-            std::fs::read_to_string("/home/eternity/Work/Rust/bin/SSY-Music/Test/config.toml")
-                .unwrap();
+        let mut user_config_dir = dirs::config_dir().ok_or("找不到系统配置目录").unwrap();
+        user_config_dir.push("ssy-music");
+        let taeget_file = user_config_dir.join("config.toml");
+        let content = std::fs::read_to_string(taeget_file).unwrap();
 
         toml::from_str(&content).unwrap()
     }

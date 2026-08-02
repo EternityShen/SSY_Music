@@ -9,7 +9,7 @@ pub enum HomePageMessage {}
 impl HomePage {
     pub fn new() -> Self {
         Self {
-            title: "ShenEternity_Music_Player".to_string(),
+            title: "Welcome! Syy-Music".to_string(),
         }
     }
 

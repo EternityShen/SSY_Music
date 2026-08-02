@@ -3,10 +3,62 @@
 use ssy_music::ui::app::App;
 
 fn main() {
+    init_app();
+
     iced::application(App::default, App::update, App::view)
         .subscription(App::subscription)
         .run()
         .unwrap();
+}
+
+fn init_app() {
+    let mut user_config_dir = dirs::config_dir().ok_or("找不到系统配置目录").unwrap();
+
+    user_config_dir.push("ssy-music");
+
+    if !user_config_dir.exists() {
+        std::fs::create_dir(&user_config_dir).unwrap();
+    }
+
+    let taeget_file = user_config_dir.join("config.toml");
+
+    if !taeget_file.exists() {
+        let log_path = user_config_dir.join("log.log");
+
+        let load_db_path = user_config_dir.join("music_db.toml");
+
+        std::fs::write(
+            &load_db_path,
+            r#"[songs.0]
+                id = 0 # id
+                title = "说了再见" # 歌名
+                artist = "周杰伦" # 歌手
+                album = "跨时代" # 专辑名
+                path = "/home/eternity/Music/音频文件/说了再见.mp3" # 音频文件路径
+                image = "/home/eternity/Music/专辑图片/周杰伦-跨时代.jpg" # 专辑图片路径
+                duration = 282.83") # 时长 s"#,
+        )
+        .unwrap();
+
+        let log_path_config = format!("{}\n", log_path.to_string_lossy());
+
+        let load_db_config = format!("{}\n", load_db_path.to_string_lossy());
+
+        std::fs::write(&taeget_file, log_path_config).unwrap();
+
+        std::fs::write(&taeget_file, load_db_config).unwrap();
+
+        std::fs::write(
+            &taeget_file,
+            format!(
+                "{}\n{}\n{}",
+                "lyrics_path = \"歌词的目录\"",
+                "play_mode = \"Load\"",
+                "net_link = \"127.0.0.1:3000\""
+            ),
+        )
+        .unwrap();
+    }
 }
 
 // use std::sync::Mutex;
