@@ -1,4 +1,4 @@
-# ShenEternity-MusicPlayer
+# SSY-Music
 ## 这是一个跨平台音乐播放器
 分server(服务端)和client(客户端);
 
