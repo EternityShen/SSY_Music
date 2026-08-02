@@ -257,7 +257,7 @@ async fn get_image_bytes(
 }
 
 impl App {
-    /// 更新歌曲的Task,由于是纯逻辑,所以提出一个函数
+    /// 网络更新歌曲的Task,由于是纯逻辑,所以提出一个函数
     fn updata_song_net(
         api: std::sync::Arc<api::request::MusicClient>,
         id: u64,
@@ -271,6 +271,7 @@ impl App {
         iced::Task::batch(vec![get_song_bytes, get_image_bytes, get_song_data])
     }
 
+    /// 本地更新歌曲的逻辑
     fn updata_song_load(&mut self, id: u64) {
         let image_path = self.player_manger.load_data.get_image_path(id).unwrap();
         let song_data = self.player_manger.load_data.get_song_data(id).unwrap();
@@ -319,6 +320,7 @@ impl App {
         }
     }
 
+    // 更新
     pub fn update(&mut self, message: AppMessage) -> iced::Task<AppMessage> {
         match message {
             // -------------------------------------------------------------------------
