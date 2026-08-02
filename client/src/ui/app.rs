@@ -7,6 +7,7 @@ use super::widgets;
 use crate::api;
 use crate::ui::event;
 
+/// 播放模式
 enum PlayMode {
     Net,
     Load,
@@ -59,12 +60,23 @@ impl PlayerManger {
         self.is_play = true;
     }
 
+    /// 播放指定路径的音频
     fn play_path(&mut self, path: String) {
         let _ = self
             .playersender
             .clone()
             .unwrap()
             .try_send(super::event::player::PlayerEvent::PlayPath(path));
+    }
+
+    /// 下一首的id
+    fn next_id(&mut self) -> u64 {
+        if self.playing_id >= self.list_num {
+            self.playing_id = 0;
+        } else {
+            self.playing_id += 1;
+        }
+        self.playing_id
     }
 
     /// 播放
@@ -449,11 +461,7 @@ impl App {
                     self.player_manger.play_time = time;
                 }
                 event::app::AppEvent::Next => {
-                    let id = if self.player_manger.playing_id == self.player_manger.list_num {
-                        0
-                    } else {
-                        self.player_manger.playing_id + 1
-                    };
+                    let id = self.player_manger.next_id();
 
                     match self.play_mode {
                         PlayMode::Net => {
