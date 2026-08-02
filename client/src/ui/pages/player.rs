@@ -45,7 +45,11 @@ impl PlayerPage {
                     self.progress_bar.update(message);
                     Some(PlayerPageEvent::Seek(time as u64))
                 }
-                widgets::progress_bar::ProgressBarMessage::SetAllValue(_) => {
+                widgets::progress_bar::ProgressBarMessage::SetAllValue(_time) => {
+                    self.progress_bar.update(message);
+                    None
+                }
+                widgets::progress_bar::ProgressBarMessage::SetVolume(_value) => {
                     self.progress_bar.update(message);
                     None
                 }
@@ -89,6 +93,11 @@ impl PlayerPage {
 
     pub fn set_info(&mut self, data: (String, String)) {
         self.info.update(widgets::info::InfoMessage::Set(data));
+    }
+
+    pub fn set_volume(&mut self, value: f32) {
+        self.progress_bar
+            .update(widgets::progress_bar::ProgressBarMessage::SetVolume(value));
     }
 
     /// 渲染

@@ -2,6 +2,7 @@
 pub struct ProgressBar {
     slider_value: f32,
     all_value: f32,
+    volume: f32,
 }
 
 /// 消息
@@ -9,6 +10,7 @@ pub struct ProgressBar {
 pub enum ProgressBarMessage {
     Seek(f32),
     SetAllValue(f32),
+    SetVolume(f32),
 }
 
 impl ProgressBar {
@@ -17,6 +19,7 @@ impl ProgressBar {
         Self {
             slider_value: 0.0,
             all_value: 100.0,
+            volume: 1.0,
         }
     }
 
@@ -28,6 +31,9 @@ impl ProgressBar {
             }
             ProgressBarMessage::SetAllValue(value) => {
                 self.all_value = value;
+            }
+            ProgressBarMessage::SetVolume(value) => {
+                self.volume = value;
             }
         }
     }
@@ -96,9 +102,15 @@ impl ProgressBar {
             (self.slider_value % 60.0) as u32
         );
 
-        // 时长信息
+        let volume = format!("音量:{}%", (self.volume * 100.0) as u32);
+
+        // 时长音量信息
         let time_info = iced::widget::row![
             iced::widget::text(all_time)
+                .size(10)
+                .color(iced::Color::from_rgb(0.9, 0.6, 0.6)),
+            iced::widget::space::horizontal(),
+            iced::widget::text(volume)
                 .size(10)
                 .color(iced::Color::from_rgb(0.9, 0.6, 0.6)),
             iced::widget::space::horizontal(),

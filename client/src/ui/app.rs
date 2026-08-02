@@ -1,7 +1,6 @@
 use futures_util::FutureExt;
 use futures_util::SinkExt;
 use futures_util::StreamExt;
-use rodio::Source;
 
 use super::pages;
 use super::widgets;
@@ -18,6 +17,7 @@ struct PlayerManger {
     playersender: Option<iced::futures::channel::mpsc::Sender<super::event::player::PlayerEvent>>,
     load_data: api::load::LoadDate,
     playing_id: u64,
+    volume: f32,
     list_num: u64,
     play_time: u64,
     is_play: bool,
@@ -33,6 +33,7 @@ impl PlayerManger {
             playersender: None,
             load_data,
             playing_id: 0,
+            volume: 1.0,
             list_num: 0,
             play_time: 0,
             is_play: false,
@@ -118,6 +119,34 @@ impl PlayerManger {
             .try_send(super::event::player::PlayerEvent::Seek(
                 self.play_time.saturating_sub(5),
             ));
+    }
+
+    /// 音量+5%
+    fn volume_add_5(&mut self) {
+        let _ = self
+            .playersender
+            .clone()
+            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
+            .unwrap()
+            .try_send(super::event::player::PlayerEvent::SetVolume(
+                self.volume + 0.05,
+            ));
+
+        self.volume += 0.05;
+    }
+
+    /// 音量-5%
+    fn volume_subtract_5(&mut self) {
+        let _ = self
+            .playersender
+            .clone()
+            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
+            .unwrap()
+            .try_send(super::event::player::PlayerEvent::SetVolume(
+                self.volume - 0.05,
+            ));
+
+        self.volume -= 0.05;
     }
 }
 
@@ -363,6 +392,14 @@ impl App {
                         self.player_manger.play();
                     }
                 }
+                iced::keyboard::Key::Named(iced::keyboard::key::Named::ArrowUp) => {
+                    self.player_manger.volume_add_5();
+                    self.player_page.set_volume(self.player_manger.volume);
+                }
+                iced::keyboard::Key::Named(iced::keyboard::key::Named::ArrowDown) => {
+                    self.player_manger.volume_subtract_5();
+                    self.player_page.set_volume(self.player_manger.volume);
+                }
                 _ => {}
             },
 
@@ -513,6 +550,9 @@ fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
                             event::player::PlayerEvent::PlayPath(path) => {
                                 is_playing = true;
                                 player_handle.play_path(path);
+                            }
+                            event::player::PlayerEvent::SetVolume(value) => {
+                                player_handle.set_volume(value);
                             }
                         }
                     }

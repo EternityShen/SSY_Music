@@ -5,4 +5,5 @@ pub enum PlayerEvent {
     Seek(u64),
     PlayBytes(Vec<u8>),
     PlayPath(String),
+    SetVolume(f32),
 }
