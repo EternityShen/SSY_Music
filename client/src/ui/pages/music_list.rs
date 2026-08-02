@@ -62,6 +62,17 @@ impl MusicListPage {
         }
     }
 
+    pub fn set_list_data(&mut self, data: Vec<api::data::Song>) {
+        let mut item_data = Vec::new();
+
+        for song in data {
+            let image_bytes = std::fs::read(&song.image).unwrap_or_default();
+            item_data.push((song.clone(), image_bytes));
+        }
+
+        let _ = self.update(MusicListPageMessage::Songs(item_data));
+    }
+
     /// 渲染
     pub fn view(&self) -> iced::Element<'_, MusicListPageMessage> {
         let list_content =

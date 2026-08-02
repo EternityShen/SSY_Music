@@ -63,8 +63,14 @@ impl PlayerPage {
             .update(widgets::progress_bar::ProgressBarMessage::Seek(time as f32));
     }
 
-    pub fn set_album_image(&mut self, data: Vec<u8>) {
+    pub fn set_album_image_from_data(&mut self, data: Vec<u8>) {
         let image_handle = iced::widget::image::Handle::from_bytes(data);
+        self.album
+            .update(widgets::album::AlbumMessage::Set(image_handle));
+    }
+
+    pub fn set_album_image_from_path(&mut self, path: String) {
+        let image_handle = iced::widget::image::Handle::from_path(path);
         self.album
             .update(widgets::album::AlbumMessage::Set(image_handle));
     }

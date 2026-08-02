@@ -61,6 +61,16 @@ impl PlayerHandle {
         }
     }
 
+    /// 设置音量
+    pub fn set_volume(&self, value: f32) {
+        self.player.set_volume(value);
+    }
+
+    /// 获取当前音量
+    pub fn volume(&self) -> f32 {
+        self.player.volume()
+    }
+
     /// 本地路径播放 会返回一个Option 音乐时长
     ///     -> Option<u64>
     pub fn play_path(&self, path: String) -> Option<u64> {

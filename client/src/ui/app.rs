@@ -1,15 +1,22 @@
 use futures_util::FutureExt;
 use futures_util::SinkExt;
 use futures_util::StreamExt;
+use rodio::Source;
 
 use super::pages;
 use super::widgets;
 use crate::api;
 use crate::ui::event;
 
+enum PlayMode {
+    Net,
+    Load,
+}
+
 /// Player的管理者
 struct PlayerManger {
     playersender: Option<iced::futures::channel::mpsc::Sender<super::event::player::PlayerEvent>>,
+    load_data: api::load::LoadDate,
     playing_id: u64,
     list_num: u64,
     play_time: u64,
@@ -17,9 +24,14 @@ struct PlayerManger {
 }
 
 impl PlayerManger {
-    fn new() -> Self {
+    fn new(db_path: &str) -> Self {
+        let load_data = api::load::LoadDate::load_data_from_toml(
+            db_path.to_string(),
+            "/home/eternity/Music/歌词/".to_string(),
+        );
         Self {
             playersender: None,
+            load_data,
             playing_id: 0,
             list_num: 0,
             play_time: 0,
@@ -44,6 +56,14 @@ impl PlayerManger {
             .unwrap()
             .try_send(super::event::player::PlayerEvent::PlayBytes(data));
         self.is_play = true;
+    }
+
+    fn play_path(&mut self, path: String) {
+        let _ = self
+            .playersender
+            .clone()
+            .unwrap()
+            .try_send(super::event::player::PlayerEvent::PlayPath(path));
     }
 
     /// 播放
@@ -111,6 +131,7 @@ enum Page {
 /// 整个ui的上帝
 pub struct App {
     api: std::sync::Arc<api::request::MusicClient>,
+    play_mode: PlayMode,
     background: widgets::background_image::BackGroundImage,
     music_list_page: pages::music_list::MusicListPage,
     home_page: pages::home::HomePage,
@@ -194,17 +215,39 @@ async fn get_image_bytes(
     api.get_image(id).await
 }
 
-/// 更新歌曲的Task,由于是纯逻辑,所以提出一个函数
-fn updata_song(api: std::sync::Arc<api::request::MusicClient>, id: u64) -> iced::Task<AppMessage> {
-    let get_song_bytes =
-        iced::Task::perform(get_song_bytes(api.clone(), id), AppMessage::SongBytes);
-    let get_image_bytes =
-        iced::Task::perform(get_image_bytes(api.clone(), id), AppMessage::ImageData);
-    let get_song_data = iced::Task::perform(get_song_data(api.clone(), id), AppMessage::SongData);
-    iced::Task::batch(vec![get_song_bytes, get_image_bytes, get_song_data])
-}
-
 impl App {
+    /// 更新歌曲的Task,由于是纯逻辑,所以提出一个函数
+    fn updata_song_net(
+        api: std::sync::Arc<api::request::MusicClient>,
+        id: u64,
+    ) -> iced::Task<AppMessage> {
+        let get_song_bytes =
+            iced::Task::perform(get_song_bytes(api.clone(), id), AppMessage::SongBytes);
+        let get_image_bytes =
+            iced::Task::perform(get_image_bytes(api.clone(), id), AppMessage::ImageData);
+        let get_song_data =
+            iced::Task::perform(get_song_data(api.clone(), id), AppMessage::SongData);
+        iced::Task::batch(vec![get_song_bytes, get_image_bytes, get_song_data])
+    }
+
+    fn updata_song_load(&mut self, id: u64) {
+        let image_path = self.player_manger.load_data.get_image_path(id).unwrap();
+        let song_data = self.player_manger.load_data.get_song_data(id).unwrap();
+
+        self.player_manger.play_path(song_data.path.clone());
+
+        self.player_page
+            .set_info((song_data.title.clone(), song_data.artist.clone()));
+        self.player_page.set_album_image_from_path(image_path);
+        self.player_page.set_album_title(song_data.album);
+        self.player_page.set_all_progress(song_data.duration as u64);
+        let bg_image_data = std::fs::read(song_data.image).unwrap_or_default();
+        self.background
+            .update(widgets::background_image::BackGroundImageMessage::Set(
+                bg_image_data,
+            ));
+    }
+
     /// 创建
     pub fn new() -> Self {
         let mut logger = logger::Logger::new("./client.log");
@@ -219,10 +262,13 @@ impl App {
         let music_list_page = pages::music_list::MusicListPage::new();
         let player_page = pages::player::PlayerPage::default();
         let home_page = pages::home::HomePage::default();
-        let player_manger = PlayerManger::new();
+        let player_manger = PlayerManger::new(
+            "/home/eternity/Work/Rust/bin/ShenEternity_Player_WorkSpace/Test/music_db.toml",
+        );
 
         Self {
             api: api_client,
+            play_mode: PlayMode::Load,
             background,
             music_list_page,
             home_page,
@@ -234,6 +280,8 @@ impl App {
 
     pub fn update(&mut self, message: AppMessage) -> iced::Task<AppMessage> {
         match message {
+            // -------------------------------------------------------------------------
+            // 背景
             AppMessage::BackGroundMessage(message) => {
                 self.background.update(message);
             }
@@ -247,13 +295,32 @@ impl App {
                 if let Some(event) = event {
                     match event {
                         pages::music_list::MusicListPageEvent::RefreshRequested => {
-                            let fetch_task =
-                                iced::Task::perform(get_list(self.api.clone()), AppMessage::Songs);
-                            return iced::Task::batch(vec![page_task, fetch_task]);
+                            match self.play_mode {
+                                PlayMode::Net => {
+                                    let fetch_task = iced::Task::perform(
+                                        get_list(self.api.clone()),
+                                        AppMessage::Songs,
+                                    );
+                                    return iced::Task::batch(vec![page_task, fetch_task]);
+                                }
+                                PlayMode::Load => {
+                                    self.player_manger.load_data.re_load();
+                                    self.music_list_page.set_list_data(
+                                        self.player_manger.load_data.get_all_song_data(),
+                                    );
+                                }
+                            }
                         }
                         pages::music_list::MusicListPageEvent::SongSelected(id) => {
-                            let song_task = updata_song(self.api.clone(), id);
-                            return iced::Task::batch(vec![song_task, page_task]);
+                            match self.play_mode {
+                                PlayMode::Net => {
+                                    let song_task = App::updata_song_net(self.api.clone(), id);
+                                    return iced::Task::batch(vec![song_task, page_task]);
+                                }
+                                PlayMode::Load => {
+                                    self.updata_song_load(id);
+                                }
+                            }
                         }
                     }
                 }
@@ -330,7 +397,7 @@ impl App {
                             image_data.clone(),
                         ));
 
-                    self.player_page.set_album_image(image_data);
+                    self.player_page.set_album_image_from_data(image_data);
                 }
             }
 
@@ -351,7 +418,14 @@ impl App {
                         self.player_manger.playing_id + 1
                     };
 
-                    return updata_song(self.api.clone(), id);
+                    match self.play_mode {
+                        PlayMode::Net => {
+                            return App::updata_song_net(self.api.clone(), id);
+                        }
+                        PlayMode::Load => {
+                            self.updata_song_load(id);
+                        }
+                    }
                 }
             },
         };
@@ -435,6 +509,10 @@ fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
                             }
                             event::player::PlayerEvent::Seek(time) => {
                                 player_handle.seek(time);
+                            }
+                            event::player::PlayerEvent::PlayPath(path) => {
+                                is_playing = true;
+                                player_handle.play_path(path);
                             }
                         }
                     }
