@@ -7,8 +7,22 @@ fn main() {
 
     iced::application(App::default, App::update, App::view)
         .subscription(App::subscription)
+        .window(iced::window::Settings {
+            icon: load_icon(),
+            ..iced::window::Settings::default()
+        })
         .run()
         .unwrap();
+}
+
+fn load_icon() -> Option<iced::window::Icon> {
+    let icon_bytes = include_bytes!("/home/eternity/Music/专辑图片/无法解析:未知.jpeg");
+
+    let image = image::load_from_memory(icon_bytes).ok()?;
+    let rgba = image.into_rgba8();
+    let (width, height) = rgba.dimensions();
+    let rgba_bytes = rgba.into_raw();
+    iced::window::icon::from_rgba(rgba_bytes, width, height).ok()
 }
 
 fn init_app() {
