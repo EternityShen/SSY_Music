@@ -14,7 +14,7 @@ pub struct LoadDate {
 }
 
 impl LoadDate {
-    pub fn load_data_from_toml(db_path: String, lyrics_dir: String) -> Self {
+    pub fn load_data_from_toml(db_path: &str, lyrics_dir: &str) -> Self {
         let result = std::fs::read_to_string(&db_path);
         let content = match result {
             Ok(s) => s,
@@ -37,7 +37,7 @@ impl LoadDate {
 
                 Self {
                     songs_by_id,
-                    db_path,
+                    db_path: db_path.to_string(),
                     lyrics_dir: PathBuf::from(lyrics_dir),
                 }
             }

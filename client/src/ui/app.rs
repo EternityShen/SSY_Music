@@ -25,11 +25,8 @@ struct PlayerManger {
 }
 
 impl PlayerManger {
-    fn new(db_path: &str) -> Self {
-        let load_data = api::load::LoadDate::load_data_from_toml(
-            db_path.to_string(),
-            "/home/eternity/Music/歌词/".to_string(),
-        );
+    fn new(db_path: &str, lyrics_path: &str) -> Self {
+        let load_data = api::load::LoadDate::load_data_from_toml(db_path, lyrics_path);
         Self {
             playersender: None,
             load_data,
@@ -292,11 +289,12 @@ impl App {
 
     /// 创建
     pub fn new() -> Self {
-        let mut logger = logger::Logger::new("./client.log");
+        let config = crate::config::Config::new();
+        let mut logger = logger::Logger::new(&config.log_path);
         logger.clear();
         let logger_handle = std::sync::Arc::new(std::sync::Mutex::new(logger));
         let api_client = std::sync::Arc::new(api::request::MusicClient::new(
-            "127.0.0.1:3000",
+            &config.load_db_path,
             logger_handle.clone(),
         ));
 
@@ -304,9 +302,7 @@ impl App {
         let music_list_page = pages::music_list::MusicListPage::new();
         let player_page = pages::player::PlayerPage::default();
         let home_page = pages::home::HomePage::default();
-        let player_manger = PlayerManger::new(
-            "/home/eternity/Work/Rust/bin/ShenEternity_Player_WorkSpace/Test/music_db.toml",
-        );
+        let player_manger = PlayerManger::new(&config.load_db_path, &config.lyrics_path);
 
         Self {
             api: api_client,
