@@ -1,6 +1,6 @@
 // 依赖过多,同名函数结构体和方法很多,所以我决定全部的调用都用完整路径(当然,有些我不知道在哪的就直接让Lsp补全了)
 
-use client::ui::app::App;
+use ssy_music::ui::app::App;
 
 fn main() {
     iced::application(App::default, App::update, App::view)

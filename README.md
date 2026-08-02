@@ -27,8 +27,8 @@ duration = 249.35
 一眼就能看懂每个字段的意义，不多赘述。
 
 监听ip和端口:
-默认使用 127.0.0.1:3000
-更改 main.rs 内的 bind 即可
+- 默认使用 127.0.0.1:3000
+- 更改 main.rs 内的 bind 即可
 
 api接口:
 - // http .........   /api/songs // /api/songs?keyword=xxx     获取歌单，搜索
