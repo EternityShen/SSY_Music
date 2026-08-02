@@ -1,3 +1,4 @@
+/// 单个歌词
 #[derive(Clone)]
 pub struct LyricData {
     pub str: String,
@@ -13,16 +14,19 @@ impl Default for LyricData {
     }
 }
 
-pub enum LyricMessage {
-    SetLyrics(String),
-    SetTime(u64),
-}
-
+/// 歌词
 pub struct Lyric {
     time: u64,
     lyrics: Vec<LyricData>,
 }
 
+/// 消息
+pub enum LyricMessage {
+    SetLyrics(String),
+    SetTime(u64),
+}
+
+/// lrc的事件转换,s
 fn parse_lrc_time(time_str: &str) -> Option<f32> {
     let parts: Vec<&str> = time_str.split(':').collect();
     if parts.len() != 2 {
@@ -35,6 +39,7 @@ fn parse_lrc_time(time_str: &str) -> Option<f32> {
     Some(minutes * 60.0 + seconds)
 }
 
+/// 从文本转换为歌词
 pub fn new_lyrics(text: String) -> Vec<LyricData> {
     let mut lyrics = Vec::new();
 
@@ -64,6 +69,7 @@ pub fn new_lyrics(text: String) -> Vec<LyricData> {
 }
 
 impl Lyric {
+    /// 创建
     pub fn new() -> Self {
         let lyrics = vec![
             LyricData {
@@ -79,6 +85,7 @@ impl Lyric {
         Self { time: 0, lyrics }
     }
 
+    /// 更新
     pub fn update(&mut self, message: LyricMessage) {
         match message {
             LyricMessage::SetLyrics(data) => {
@@ -91,6 +98,7 @@ impl Lyric {
         }
     }
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'_, LyricMessage> {
         let index = self
             .lyrics
@@ -130,6 +138,7 @@ impl Lyric {
 }
 
 impl Default for Lyric {
+    /// 应付
     fn default() -> Self {
         Self::new()
     }
