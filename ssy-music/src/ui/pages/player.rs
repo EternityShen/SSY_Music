@@ -5,6 +5,7 @@ pub struct PlayerPage {
     album: widgets::album::Album,
     progress_bar: widgets::progress_bar::ProgressBar,
     info: widgets::info::Info,
+    lyric: widgets::lyric::Lyric,
 }
 
 /// 消息
@@ -12,6 +13,7 @@ pub enum PlayerPageMessage {
     AlbumMessage(widgets::album::AlbumMessage),
     ProgressBarMessage(widgets::progress_bar::ProgressBarMessage),
     InfoMessage(widgets::info::InfoMessage),
+    LyricMessage(widgets::lyric::LyricMessage),
 }
 
 /// 事件
@@ -25,10 +27,12 @@ impl PlayerPage {
         let album = widgets::album::Album::default();
         let progress_bar = widgets::progress_bar::ProgressBar::default();
         let info = widgets::info::Info::default();
+        let lyric = widgets::lyric::Lyric::default();
         Self {
             album,
             progress_bar,
             info,
+            lyric,
         }
     }
 
@@ -56,6 +60,10 @@ impl PlayerPage {
             },
             PlayerPageMessage::InfoMessage(message) => {
                 self.info.update(message);
+                None
+            }
+            PlayerPageMessage::LyricMessage(message) => {
+                self.lyric.update(message);
                 None
             }
         }
@@ -100,6 +108,16 @@ impl PlayerPage {
             .update(widgets::progress_bar::ProgressBarMessage::SetVolume(value));
     }
 
+    pub fn set_lyric_data(&mut self, data: String) {
+        self.lyric
+            .update(widgets::lyric::LyricMessage::SetLyrics(data));
+    }
+
+    pub fn set_lyric_time(&mut self, time: u64) {
+        self.lyric
+            .update(widgets::lyric::LyricMessage::SetTime(time));
+    }
+
     /// 渲染
     pub fn view(&self) -> iced::Element<'_, PlayerPageMessage> {
         let album = self.album.view().map(PlayerPageMessage::AlbumMessage);
@@ -108,6 +126,7 @@ impl PlayerPage {
             .view()
             .map(PlayerPageMessage::ProgressBarMessage);
         let info = self.info.view().map(PlayerPageMessage::InfoMessage);
+        let lyric = self.lyric.view().map(PlayerPageMessage::LyricMessage);
 
         let left =
             iced::widget::container(iced::widget::column![album].align_x(iced::Alignment::Center))
@@ -122,7 +141,18 @@ impl PlayerPage {
         .center_x(iced::Length::Fill)
         .center_y(iced::Length::Fill);
 
-        iced::widget::row![left, right]
+        let back = iced::widget::row![left, right]
+            .width(iced::Length::Fill)
+            .height(iced::Length::Fill);
+
+        let top = iced::widget::column![
+            iced::widget::space::vertical(),
+            lyric,
+            iced::widget::space::Space::default().height(20),
+        ]
+        .width(iced::Length::Fill);
+
+        iced::widget::stack!(back, top)
             .width(iced::Length::Fill)
             .height(iced::Length::Fill)
             .into()

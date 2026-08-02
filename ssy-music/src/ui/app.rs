@@ -189,6 +189,7 @@ pub enum AppMessage {
     SongBytes(Vec<u8>),
     SongData(api::data::Song),
     ImageData(Option<Vec<u8>>),
+    LyricData(Option<String>),
     AppEventMessage(event::app::AppEvent),
 }
 
@@ -253,6 +254,11 @@ async fn get_image_bytes(
     api.get_image(id).await
 }
 
+/// 获取歌词
+async fn get_lyric_data(api: std::sync::Arc<api::request::MusicClient>, id: u64) -> Option<String> {
+    api.fetch_lyrics(id).await
+}
+
 impl App {
     /// 网络更新歌曲的Task,由于是纯逻辑,所以提出一个函数
     fn updata_song_net(
@@ -265,7 +271,14 @@ impl App {
             iced::Task::perform(get_image_bytes(api.clone(), id), AppMessage::ImageData);
         let get_song_data =
             iced::Task::perform(get_song_data(api.clone(), id), AppMessage::SongData);
-        iced::Task::batch(vec![get_song_bytes, get_image_bytes, get_song_data])
+        let get_lyric_str =
+            iced::Task::perform(get_lyric_data(api.clone(), id), AppMessage::LyricData);
+        iced::Task::batch(vec![
+            get_song_bytes,
+            get_image_bytes,
+            get_song_data,
+            get_lyric_str,
+        ])
     }
 
     /// 本地更新歌曲的逻辑
@@ -285,6 +298,16 @@ impl App {
             .update(widgets::background_image::BackGroundImageMessage::Set(
                 bg_image_data,
             ));
+
+        let lyric_path = self
+            .player_manger
+            .load_data
+            .lyrics_dir
+            .join(format!("{}-{}.txt", song_data.title, song_data.artist));
+
+        let lyric_str = std::fs::read_to_string(lyric_path).unwrap_or_default();
+
+        self.player_page.set_lyric_data(lyric_str);
     }
 
     /// 创建
@@ -448,6 +471,11 @@ impl App {
                 }
             }
 
+            AppMessage::LyricData(data) => {
+                let lyric_str = data.unwrap_or_default();
+                self.player_page.set_lyric_data(lyric_str);
+            }
+
             // -------------------------------------------------------------------------
             // 订阅发送的事件
             AppMessage::AppEventMessage(event) => match event {
@@ -456,6 +484,7 @@ impl App {
                 }
                 event::app::AppEvent::PlayTime(time) => {
                     self.player_page.set_progress(time);
+                    self.player_page.set_lyric_time(time);
                     self.player_manger.play_time = time;
                 }
                 event::app::AppEvent::Next => {

@@ -675,23 +675,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "client"
-version = "0.1.0"
-dependencies = [
- "futures-util",
- "iced",
- "image",
- "json",
- "logger",
- "reqwest",
- "rodio",
- "serde",
- "serde_json",
- "tokio",
- "toml",
-]
-
-[[package]]
 name = "clipboard-win"
 version = "5.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4487,6 +4470,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eda41003dc44290527a59b13432d4a0379379fa074b70174882adfbdfd917844"
 dependencies = [
  "bitflags 2.13.1",
+]
+
+[[package]]
+name = "ssy-music"
+version = "0.1.0"
+dependencies = [
+ "futures-util",
+ "iced",
+ "image",
+ "json",
+ "logger",
+ "reqwest",
+ "rodio",
+ "serde",
+ "serde_json",
+ "tokio",
+ "toml",
 ]
 
 [[package]]
