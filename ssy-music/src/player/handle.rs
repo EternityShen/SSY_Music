@@ -1,7 +1,7 @@
 use std::{fs::File, time::Duration};
 
 use cpal::Sample;
-use ringbuf::traits::{Producer, Split};
+use ringbuf::traits::Producer;
 use rodio::{Decoder, MixerDeviceSink, Player, Source};
 
 /// 音频播放器句柄
@@ -17,27 +17,20 @@ pub struct PlayerHandle {
     producer: std::sync::Arc<std::sync::Mutex<ringbuf::HeapProd<f32>>>,
 }
 
-// 实现默认构造
-impl Default for PlayerHandle {
-    /// 构造一个默认的PlayerHandle句柄
-    fn default() -> Self {
+impl PlayerHandle {
+    /// 创建
+    pub fn new(producer_arc: std::sync::Arc<std::sync::Mutex<ringbuf::HeapProd<f32>>>) -> Self {
         let _device = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
         let player = Player::connect_new(_device.mixer());
-
-        let ring_buffer = ringbuf::HeapRb::<f32>::new(2048 * 8);
-        let (producer, _consumer) = ring_buffer.split();
-        let producer = std::sync::Arc::new(std::sync::Mutex::new(producer));
 
         Self {
             _device,
             player,
             current_bytes: std::sync::Mutex::new(None),
-            producer,
+            producer: producer_arc,
         }
     }
-}
 
-impl PlayerHandle {
     /// 继续
     pub fn play(&self) {
         self.player.play();

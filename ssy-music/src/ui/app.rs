@@ -1,6 +1,12 @@
 use futures_util::FutureExt;
 use futures_util::SinkExt;
 use futures_util::StreamExt;
+use ringbuf::traits::Consumer;
+use ringbuf::traits::Observer;
+use ringbuf::traits::Split;
+use spectrum_analyzer::scaling::divide_by_N_sqrt;
+use spectrum_analyzer::windows::hann_window;
+use spectrum_analyzer::{FrequencyLimit, samples_fft_to_spectrum};
 
 use super::pages;
 use super::widgets;
@@ -191,6 +197,7 @@ pub enum AppMessage {
     ImageData(Option<Vec<u8>>),
     LyricData(Option<String>),
     AppEventMessage(event::app::AppEvent),
+    Tick,
 }
 
 /// 获取音乐列表
@@ -499,6 +506,9 @@ impl App {
                     self.player_page.set_lyric_time(time);
                     self.player_manger.play_time = time;
                 }
+                event::app::AppEvent::FftReceiver(rx) => {
+                    self.player_page.set_spectrum_rx(rx);
+                }
                 event::app::AppEvent::Next => {
                     let id = self.player_manger.next_id();
 
@@ -512,6 +522,14 @@ impl App {
                     }
                 }
             },
+
+            // -------------------------------------------------------------------------
+            // Tick
+            AppMessage::Tick => {
+                let _ = self
+                    .player_page
+                    .update(pages::player::PlayerPageMessage::Tick);
+            }
         };
         iced::Task::none()
     }
@@ -520,6 +538,7 @@ impl App {
     pub fn subscription(&self) -> iced::Subscription<AppMessage> {
         iced::Subscription::batch(vec![
             iced::Subscription::run(player_work).map(AppMessage::AppEventMessage),
+            iced::time::every(std::time::Duration::from_millis(16)).map(|_| AppMessage::Tick),
             iced::event::listen_with(|event, _status, _window_id| match event {
                 iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => {
                     Some(AppMessage::KeyPressed(key))
@@ -560,15 +579,67 @@ impl App {
     }
 }
 
+const FFT_SIZE: usize = 2048;
+
 /// player订阅的构建器
 fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
     iced::stream::channel(100, async |mut output| {
         let (sender, mut receiver) =
             iced::futures::channel::mpsc::channel::<event::player::PlayerEvent>(100);
 
-        let player_handle = crate::player::handle::PlayerHandle::default();
+        let ring_buffer = ringbuf::HeapRb::<f32>::new(FFT_SIZE * 8);
+        let (producer, mut consumer) = ring_buffer.split();
+        let producer_arc = std::sync::Arc::new(std::sync::Mutex::new(producer));
+
+        let player_handle = crate::player::handle::PlayerHandle::new(producer_arc);
+
+        let (fft_tx, fft_rx) = std::sync::mpsc::channel();
+
+        std::thread::spawn(move || {
+            let mut fft_buffer = vec![0.0f32; FFT_SIZE];
+            let num_bands = 64;
+            let sample_rate = 44100; // 默认采样率
+
+            loop {
+                if consumer.occupied_len() >= FFT_SIZE {
+                    consumer.pop_slice(&mut fft_buffer);
+
+                    let windowed = hann_window(&fft_buffer);
+
+                    if let Ok(spectrum) = samples_fft_to_spectrum(
+                        &windowed,
+                        sample_rate,
+                        FrequencyLimit::Range(20.0, 4000.0),
+                        Some(&divide_by_N_sqrt),
+                    ) {
+                        let raw_data = spectrum.data();
+                        if !raw_data.is_empty() {
+                            let chunk_size = (raw_data.len() / num_bands).max(1);
+                            let mut bands = Vec::with_capacity(num_bands);
+
+                            for chunk in raw_data.chunks(chunk_size) {
+                                let avg_amp: f32 = chunk.iter().map(|(_, a)| a.val()).sum::<f32>()
+                                    / chunk.len() as f32;
+
+                                let db = if avg_amp > 0.0 {
+                                    20.0 * avg_amp.log10()
+                                } else {
+                                    -60.0
+                                };
+                                let normalized = ((db - (-60.0)) / 60.0).clamp(0.0, 1.0);
+                                bands.push(normalized);
+                            }
+
+                            let _ = fft_tx.send(bands);
+                        }
+                    }
+                }
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
+        });
 
         let _ = output.send(event::app::AppEvent::Ready(sender)).await;
+        let _ = output.send(event::app::AppEvent::FftReceiver(fft_rx)).await;
 
         let mut is_playing = false;
 

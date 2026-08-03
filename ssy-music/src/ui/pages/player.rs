@@ -6,6 +6,10 @@ pub struct PlayerPage {
     progress_bar: widgets::progress_bar::ProgressBar,
     info: widgets::info::Info,
     lyric: widgets::lyric::Lyric,
+
+    spectrum_rx: Option<std::sync::mpsc::Receiver<Vec<f32>>>,
+    spectrum_data: Vec<f32>,
+    phase: f32,
 }
 
 /// 消息
@@ -14,6 +18,8 @@ pub enum PlayerPageMessage {
     ProgressBarMessage(widgets::progress_bar::ProgressBarMessage),
     InfoMessage(widgets::info::InfoMessage),
     LyricMessage(widgets::lyric::LyricMessage),
+
+    Tick,
 }
 
 /// 事件
@@ -28,11 +34,15 @@ impl PlayerPage {
         let progress_bar = widgets::progress_bar::ProgressBar::default();
         let info = widgets::info::Info::default();
         let lyric = widgets::lyric::Lyric::default();
+
         Self {
             album,
             progress_bar,
             info,
             lyric,
+            spectrum_rx: None,
+            spectrum_data: vec![0.0; 64], // 默认 64 频段
+            phase: 0.0,
         }
     }
 
@@ -64,6 +74,16 @@ impl PlayerPage {
             }
             PlayerPageMessage::LyricMessage(message) => {
                 self.lyric.update(message);
+                None
+            }
+            PlayerPageMessage::Tick => {
+                self.phase += 0.05;
+
+                if let Some(rx) = &self.spectrum_rx {
+                    while let Ok(new_data) = rx.try_recv() {
+                        self.spectrum_data = new_data;
+                    }
+                }
                 None
             }
         }
@@ -118,6 +138,10 @@ impl PlayerPage {
             .update(widgets::lyric::LyricMessage::SetTime(time));
     }
 
+    pub fn set_spectrum_rx(&mut self, rx: std::sync::mpsc::Receiver<Vec<f32>>) {
+        self.spectrum_rx = Some(rx);
+    }
+
     /// 渲染
     pub fn view(&self) -> iced::Element<'_, PlayerPageMessage> {
         let album = self.album.view().map(PlayerPageMessage::AlbumMessage);
@@ -127,6 +151,13 @@ impl PlayerPage {
             .map(PlayerPageMessage::ProgressBarMessage);
         let info = self.info.view().map(PlayerPageMessage::InfoMessage);
         let lyric = self.lyric.view().map(PlayerPageMessage::LyricMessage);
+
+        let sine_wave_canvas = iced::widget::canvas(widgets::sine_wave_v::SineWave::new(
+            &self.spectrum_data,
+            self.phase,
+        ))
+        .width(iced::Length::Fill)
+        .height(iced::Length::Fill);
 
         let left =
             iced::widget::container(iced::widget::column![album].align_x(iced::Alignment::Center))
@@ -152,7 +183,7 @@ impl PlayerPage {
         ]
         .width(iced::Length::Fill);
 
-        iced::widget::stack!(back, top)
+        iced::widget::stack!(sine_wave_canvas, back, top)
             .width(iced::Length::Fill)
             .height(iced::Length::Fill)
             .into()
