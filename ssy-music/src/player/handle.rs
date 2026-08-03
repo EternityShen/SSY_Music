@@ -13,8 +13,14 @@ pub struct PlayerHandle {
     player: Player,
     // 备份，用于seek
     current_bytes: std::sync::Mutex<Option<Vec<u8>>>,
+    current_path: String,
+
     // 记录producer
     producer: std::sync::Arc<std::sync::Mutex<ringbuf::HeapProd<f32>>>,
+
+    // 计算器
+    start_position: std::sync::Arc<std::sync::Mutex<u64>>,
+    start_instant: std::sync::Arc<std::sync::Mutex<Option<std::time::Instant>>>,
 }
 
 impl PlayerHandle {
@@ -27,7 +33,10 @@ impl PlayerHandle {
             _device,
             player,
             current_bytes: std::sync::Mutex::new(None),
+            current_path: "OVO".to_string(),
             producer: producer_arc,
+            start_position: std::sync::Arc::new(std::sync::Mutex::new(0)),
+            start_instant: std::sync::Arc::new(std::sync::Mutex::new(None)),
         }
     }
 
@@ -45,23 +54,58 @@ impl PlayerHandle {
     pub fn seek(&self, time: u64) {
         let seek_duration = Duration::from_secs(time);
 
-        if self.player.try_seek(seek_duration).is_err() {
-            if let Ok(guard) = self.current_bytes.lock() {
-                if let Some(data) = &*guard {
-                    self.player.stop();
+        //优先尝试 Rodio 原生的 try_seek
+        if self.player.try_seek(seek_duration).is_ok() {
+            return;
+        }
 
-                    let cursor = std::io::Cursor::new(data.clone());
-                    if let Ok(source) = rodio::Decoder::new(cursor) {
-                        let skipped_source = source.skip_duration(seek_duration);
+        let update_internal_time = || {
+            if let Ok(mut pos) = self.start_position.lock() {
+                *pos = time;
+            }
+            if let Ok(mut inst) = self.start_instant.lock() {
+                *inst = Some(std::time::Instant::now());
+            }
+        };
 
-                        let visualizable_source = VisualizableSource {
-                            input: skipped_source,
-                            producer: std::sync::Arc::clone(&self.producer),
-                        };
+        //如果 try_seek 失败，尝试从内存 Bytes 恢复
+        let mut handled = false;
+        if let Ok(guard) = self.current_bytes.lock() {
+            if let Some(data) = &*guard {
+                self.player.stop();
 
-                        self.player.append(visualizable_source);
-                        self.play();
-                    }
+                let cursor = std::io::Cursor::new(data.clone());
+                if let Ok(source) = rodio::Decoder::new(cursor) {
+                    let skipped_source = source.skip_duration(seek_duration);
+
+                    let visualizable_source = VisualizableSource {
+                        input: skipped_source,
+                        producer: std::sync::Arc::clone(&self.producer),
+                    };
+
+                    self.player.append(visualizable_source);
+                    self.play();
+                    update_internal_time();
+                    handled = true;
+                }
+            }
+        }
+
+        //如果 current_bytes 是 None (说明是 play_path 播放的)，从 current_path 恢复！
+        if !handled {
+            self.player.stop();
+            if let Ok(file) = std::fs::File::open(&self.current_path) {
+                if let Ok(source) = rodio::Decoder::try_from(file) {
+                    let skipped_source = source.skip_duration(seek_duration);
+
+                    let visualizable_source = VisualizableSource {
+                        input: skipped_source,
+                        producer: std::sync::Arc::clone(&self.producer),
+                    };
+
+                    self.player.append(visualizable_source);
+                    self.play();
+                    update_internal_time();
                 }
             }
         }
@@ -79,9 +123,10 @@ impl PlayerHandle {
 
     /// 本地路径播放 会返回一个Option 音乐时长
     ///     -> Option<u64>
-    pub fn play_path(&self, path: String) -> Option<u64> {
+    pub fn play_path(&mut self, path: String) -> Option<u64> {
         self.player.stop();
-        let file = File::open(path).expect("Error1");
+        let file = File::open(&path).expect("Error1");
+        self.current_path = path;
         let source = Decoder::try_from(file).expect("Error2");
         let duration = source.total_duration().map(|d| d.as_secs());
         let visualizablesource = VisualizableSource {
@@ -89,6 +134,13 @@ impl PlayerHandle {
             producer: std::sync::Arc::clone(&self.producer),
         };
         self.player.append(visualizablesource);
+        self.play();
+        if let Ok(mut pos) = self.start_position.lock() {
+            *pos = 0;
+        }
+        if let Ok(mut inst) = self.start_instant.lock() {
+            *inst = Some(std::time::Instant::now());
+        }
         duration
     }
 
@@ -107,6 +159,12 @@ impl PlayerHandle {
                 };
                 self.player.append(visualizablesource);
                 self.play();
+                if let Ok(mut pos) = self.start_position.lock() {
+                    *pos = 0;
+                }
+                if let Ok(mut inst) = self.start_instant.lock() {
+                    *inst = Some(std::time::Instant::now());
+                }
             }
             Err(_e) => {
                 todo!()
@@ -117,8 +175,18 @@ impl PlayerHandle {
     /// 获取当前播放到的时间
     ///     -> u64
     pub fn get_pos_time(&self) -> u64 {
-        let pos = self.player.get_pos();
-        pos.as_secs()
+        let base_pos = self.start_position.lock().map(|p| *p).unwrap_or(0);
+
+        if let Ok(inst_guard) = self.start_instant.lock() {
+            if let Some(start_time) = *inst_guard {
+                if !self.player.is_paused() {
+                    let elapsed = start_time.elapsed().as_secs();
+                    return base_pos + elapsed;
+                }
+            }
+        }
+
+        base_pos
     }
 
     /// 播放器内是否为空(空就是没有音频在播放了)

@@ -592,7 +592,7 @@ fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
         let (producer, mut consumer) = ring_buffer.split();
         let producer_arc = std::sync::Arc::new(std::sync::Mutex::new(producer));
 
-        let player_handle = crate::player::handle::PlayerHandle::new(producer_arc);
+        let mut player_handle = crate::player::handle::PlayerHandle::new(producer_arc);
 
         let (fft_tx, fft_rx) = std::sync::mpsc::channel();
 
