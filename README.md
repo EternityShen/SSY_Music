@@ -13,8 +13,8 @@
   * **异步运行时**：Tokio
   * **数据存储**：轻量级 TOML 结构化文本数据库
 * **SSY-Music (客户端)**：极致流畅的现代原生 GUI 交互界面。
-  * **GUI 框架**：[Iced](https://github.com/iced-rs/iced) (0.14+)
-  * **音频引擎**：[Rodio](https://github.com/rust-audio/rodio)
+  * **GUI 框架**：[Iced](https://github.com/iced-rs/iced) (0.14)
+  * **音频引擎**：Rodio
   * **网络通信**：Reqwest (Async)
 
 ---
@@ -76,7 +76,7 @@ cargo run -p ssy-music --release
 
 ## 📡 API 接口说明 (RESTful API)
 
-服务端提供以下简洁高能的 REST 接口：
+服务端提供以下 REST 接口：
 
 | HTTP 方法 | Endpoint | 说明 | 示例 / 参数 |
 | --- | --- | --- | --- |
@@ -87,14 +87,6 @@ cargo run -p ssy-music --release
 | `GET` | `/api/songs/{id}/data` | 获取特定歌曲元数据 | 返回单曲 JSON 详情 |
 
 ---
-
-## 🛠️ 路线图 (Roadmap)
-
-* [x] 基于 TOML 的轻量级 Server 数据库及流媒体分发
-* [x] 基于 Iced 的客户端 UI 交互与音频播放
-* [x] LRC 歌词解析支持
-* [ ] [ ] 播放列表/历史记录持
-
 ---
 
 ## 📄 开源许可

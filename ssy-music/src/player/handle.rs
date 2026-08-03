@@ -185,8 +185,8 @@ impl PlayerHandle {
                     *inst = Some(std::time::Instant::now());
                 }
             }
-            Err(_e) => {
-                todo!()
+            Err(e) => {
+                eprintln!("字节数据播放失败:{}", e);
             }
         }
     }
