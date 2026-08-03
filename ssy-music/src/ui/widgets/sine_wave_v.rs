@@ -4,23 +4,27 @@ use iced::{
     widget::canvas::{self, Path, Stroke},
 };
 
+/// 正弦波音频可视化
+pub struct SineWave<'a> {
+    spectrum: &'a [f32],
+    phase: f32,
+}
+
+// 消息
 #[derive(Debug, Clone)]
 pub enum SineWaveMessage {
     SpectrumUpdated(Vec<f32>),
     PhaseUpdated(f32),
 }
 
-pub struct SineWave<'a> {
-    spectrum: &'a [f32],
-    phase: f32,
-}
-
 impl<'a> SineWave<'a> {
+    // 创建
     pub fn new(spectrum: &'a [f32], phase: f32) -> Self {
         Self { spectrum, phase }
     }
 }
 
+// 实现canvas::Program(自己画), 我的数学不是很好, 目前还没法写得太好看
 impl<'a, Message> canvas::Program<Message> for SineWave<'a> {
     type State = ();
 

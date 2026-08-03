@@ -43,20 +43,24 @@ impl PlayerHandle {
 
     /// 时间跳转
     pub fn seek(&self, time: u64) {
-        match self.player.try_seek(Duration::from_secs(time)) {
-            Ok(_) => {}
-            Err(_) => {
-                // 调转失败直接从新播放
-                if let Ok(guard) = self.current_bytes.lock() {
-                    if let Some(data) = &*guard {
-                        self.player.stop();
+        let seek_duration = Duration::from_secs(time);
 
-                        let cursor = std::io::Cursor::new(data.clone());
-                        if let Ok(source) = rodio::Decoder::new(cursor) {
-                            self.player.append(source);
-                            let _ = self.player.try_seek(Duration::from_secs(time));
-                            self.play();
-                        }
+        if self.player.try_seek(seek_duration).is_err() {
+            if let Ok(guard) = self.current_bytes.lock() {
+                if let Some(data) = &*guard {
+                    self.player.stop();
+
+                    let cursor = std::io::Cursor::new(data.clone());
+                    if let Ok(source) = rodio::Decoder::new(cursor) {
+                        let skipped_source = source.skip_duration(seek_duration);
+
+                        let visualizable_source = VisualizableSource {
+                            input: skipped_source,
+                            producer: std::sync::Arc::clone(&self.producer),
+                        };
+
+                        self.player.append(visualizable_source);
+                        self.play();
                     }
                 }
             }

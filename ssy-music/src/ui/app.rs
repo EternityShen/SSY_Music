@@ -524,7 +524,7 @@ impl App {
             },
 
             // -------------------------------------------------------------------------
-            // Tick
+            // Tick 音频可视化的tick
             AppMessage::Tick => {
                 let _ = self
                     .player_page
@@ -587,6 +587,7 @@ fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
         let (sender, mut receiver) =
             iced::futures::channel::mpsc::channel::<event::player::PlayerEvent>(100);
 
+        // 初始化缓冲区
         let ring_buffer = ringbuf::HeapRb::<f32>::new(FFT_SIZE * 8);
         let (producer, mut consumer) = ring_buffer.split();
         let producer_arc = std::sync::Arc::new(std::sync::Mutex::new(producer));
@@ -595,6 +596,7 @@ fn player_work() -> impl iced::futures::Stream<Item = event::app::AppEvent> {
 
         let (fft_tx, fft_rx) = std::sync::mpsc::channel();
 
+        // 傅里叶变换采集器
         std::thread::spawn(move || {
             let mut fft_buffer = vec![0.0f32; FFT_SIZE];
             let num_bands = 64;
