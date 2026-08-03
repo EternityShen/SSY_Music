@@ -43,11 +43,30 @@ impl PlayerHandle {
     /// 继续
     pub fn play(&self) {
         self.player.play();
+
+        if let Ok(mut inst_guard) = self.start_instant.lock() {
+            // 如果当前没有在计时（即处于暂停状态），才重新开始计时
+            if inst_guard.is_none() {
+                *inst_guard = Some(std::time::Instant::now());
+            }
+        }
     }
 
     /// 暂停
     pub fn pause(&self) {
         self.player.pause();
+
+        if let Ok(mut inst_guard) = self.start_instant.lock() {
+            if let Some(start_time) = inst_guard.take() {
+                // 计算从上次播放到点击暂停这一刻经过的秒数
+                let elapsed = start_time.elapsed().as_secs();
+
+                if let Ok(mut pos_guard) = self.start_position.lock() {
+                    // 将经过的时间累加到基础位置中
+                    *pos_guard += elapsed;
+                }
+            }
+        }
     }
 
     /// 时间跳转

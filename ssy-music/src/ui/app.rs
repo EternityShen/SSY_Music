@@ -538,7 +538,7 @@ impl App {
     pub fn subscription(&self) -> iced::Subscription<AppMessage> {
         iced::Subscription::batch(vec![
             iced::Subscription::run(player_work).map(AppMessage::AppEventMessage),
-            iced::time::every(std::time::Duration::from_millis(16)).map(|_| AppMessage::Tick),
+            iced::time::every(std::time::Duration::from_millis(10)).map(|_| AppMessage::Tick),
             iced::event::listen_with(|event, _status, _window_id| match event {
                 iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => {
                     Some(AppMessage::KeyPressed(key))
