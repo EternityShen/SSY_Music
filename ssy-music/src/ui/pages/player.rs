@@ -55,9 +55,13 @@ impl PlayerPage {
                 None
             }
             PlayerPageMessage::ProgressBarMessage(message) => match message {
-                widgets::progress_bar::ProgressBarMessage::Seek(time) => {
+                widgets::progress_bar::ProgressBarMessage::Seek(_time) => {
                     self.progress_bar.update(message);
-                    Some(PlayerPageEvent::Seek(time as u64))
+                    None
+                }
+                widgets::progress_bar::ProgressBarMessage::OnSeek(_time) => {
+                    self.progress_bar.update(message);
+                    None
                 }
                 widgets::progress_bar::ProgressBarMessage::SetAllValue(_time) => {
                     self.progress_bar.update(message);
@@ -65,6 +69,13 @@ impl PlayerPage {
                 }
                 widgets::progress_bar::ProgressBarMessage::SetVolume(_value) => {
                     self.progress_bar.update(message);
+                    None
+                }
+                widgets::progress_bar::ProgressBarMessage::OnRelease => {
+                    let value = self.progress_bar.update(message);
+                    if let Some(value) = value {
+                        return Some(PlayerPageEvent::Seek(value as u64));
+                    }
                     None
                 }
             },

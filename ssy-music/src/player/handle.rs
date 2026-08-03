@@ -179,6 +179,7 @@ impl PlayerHandle {
 
         if let Ok(inst_guard) = self.start_instant.lock() {
             if let Some(start_time) = *inst_guard {
+                // 如果正在播放，加上从上次 Seek/播放 到现在所经过的时间
                 if !self.player.is_paused() {
                     let elapsed = start_time.elapsed().as_secs();
                     return base_pos + elapsed;
