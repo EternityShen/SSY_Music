@@ -1,5 +1,7 @@
 use std::{fs::File, time::Duration};
 
+use cpal::Sample;
+use ringbuf::traits::{Producer, Split};
 use rodio::{Decoder, MixerDeviceSink, Player, Source};
 
 /// 音频播放器句柄
@@ -11,6 +13,8 @@ pub struct PlayerHandle {
     player: Player,
     // 备份，用于seek
     current_bytes: std::sync::Mutex<Option<Vec<u8>>>,
+    // 记录producer
+    producer: std::sync::Arc<std::sync::Mutex<ringbuf::HeapProd<f32>>>,
 }
 
 // 实现默认构造
@@ -20,10 +24,15 @@ impl Default for PlayerHandle {
         let _device = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
         let player = Player::connect_new(_device.mixer());
 
+        let ring_buffer = ringbuf::HeapRb::<f32>::new(2048 * 8);
+        let (producer, _consumer) = ring_buffer.split();
+        let producer = std::sync::Arc::new(std::sync::Mutex::new(producer));
+
         Self {
             _device,
             player,
             current_bytes: std::sync::Mutex::new(None),
+            producer,
         }
     }
 }
@@ -78,7 +87,11 @@ impl PlayerHandle {
         let file = File::open(path).expect("Error1");
         let source = Decoder::try_from(file).expect("Error2");
         let duration = source.total_duration().map(|d| d.as_secs());
-        self.player.append(source);
+        let visualizablesource = VisualizableSource {
+            input: source,
+            producer: std::sync::Arc::clone(&self.producer),
+        };
+        self.player.append(visualizablesource);
         duration
     }
 
@@ -91,7 +104,11 @@ impl PlayerHandle {
         let cursor = std::io::Cursor::new(data);
         match rodio::Decoder::new(cursor) {
             Ok(source) => {
-                self.player.append(source);
+                let visualizablesource = VisualizableSource {
+                    input: source,
+                    producer: std::sync::Arc::clone(&self.producer),
+                };
+                self.player.append(visualizablesource);
                 self.play();
             }
             Err(_e) => {
@@ -110,5 +127,63 @@ impl PlayerHandle {
     /// 播放器内是否为空(空就是没有音频在播放了)
     pub fn is_empty(&self) -> bool {
         self.player.empty()
+    }
+}
+
+/// 音频采样拦截器
+/// 自动使用 dasp_sample 将任意 PCM 采样 (i16/u16/f32等) 转换为标准的 f32 并推入环形缓冲区
+pub struct VisualizableSource<S> {
+    pub input: S,
+    pub producer: std::sync::Arc<std::sync::Mutex<ringbuf::HeapProd<f32>>>,
+}
+
+impl<S> Iterator for VisualizableSource<S>
+where
+    S: Iterator,
+    S::Item: Sample + dasp_sample::ToSample<f32>, // 加上 ToSample<f32> 约束
+{
+    type Item = S::Item;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        // 获取原始采样
+        let sample = self.input.next()?;
+
+        // 使用 dasp_sample 的 .to_sample::<f32>() 安全转换为 f32 (-1.0 ~ 1.0)
+        let sample_f32: f32 = sample.to_sample();
+
+        // 非阻塞写入 FFT 环形缓冲区
+        if let Ok(mut producer) = self.producer.try_lock() {
+            let _ = producer.try_push(sample_f32);
+        }
+
+        // 返回原始采样供音频线程输出
+        Some(sample)
+    }
+}
+
+impl<S> Source for VisualizableSource<S>
+where
+    S: Source,
+    S::Item: Sample + dasp_sample::ToSample<f32>,
+{
+    #[inline]
+    fn current_span_len(&self) -> Option<usize> {
+        self.input.current_span_len()
+    }
+
+    #[inline]
+    fn channels(&self) -> rodio::ChannelCount {
+        self.input.channels()
+    }
+
+    #[inline]
+    fn sample_rate(&self) -> rodio::SampleRate {
+        self.input.sample_rate()
+    }
+
+    #[inline]
+    fn total_duration(&self) -> Option<Duration> {
+        self.input.total_duration()
     }
 }
