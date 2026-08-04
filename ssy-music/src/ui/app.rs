@@ -598,18 +598,18 @@ impl App {
         match self.page {
             Page::Home => {
                 let home_page = self.home_page.view().map(AppMessage::HomePageMessage);
-                iced::widget::stack!(background, middle_layer, page_switch, home_page).into()
+                iced::widget::stack!(background, middle_layer, home_page, page_switch).into()
             }
             Page::Player => {
                 let player_page = self.player_page.view().map(AppMessage::PlayerPageMessage);
-                iced::widget::stack!(background, middle_layer, page_switch, player_page).into()
+                iced::widget::stack!(background, middle_layer, player_page, page_switch).into()
             }
             Page::MusicList => {
                 let music_list = self
                     .music_list_page
                     .view()
                     .map(AppMessage::MusicListMessage);
-                iced::widget::stack!(background, middle_layer, page_switch, music_list).into()
+                iced::widget::stack!(background, middle_layer, music_list, page_switch).into()
             }
         }
     }

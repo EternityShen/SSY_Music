@@ -52,7 +52,7 @@ impl ProgressBar {
             }
             ProgressBarMessage::OnRelease => {
                 self.is_on = false;
-                return Some(self.slider_value);
+                Some(self.slider_value)
             }
         }
     }
