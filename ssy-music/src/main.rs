@@ -7,6 +7,7 @@ fn main() {
 
     iced::application(App::default, App::update, App::view)
         .subscription(App::subscription)
+        .title("SSY-Music")
         .window(iced::window::Settings {
             icon: load_icon(),
             ..iced::window::Settings::default()
@@ -16,12 +17,13 @@ fn main() {
 }
 
 fn load_icon() -> Option<iced::window::Icon> {
-    let icon_bytes = include_bytes!("/home/eternity/Music/专辑图片/无法解析:未知.jpeg");
+    let icon_bytes = include_bytes!("../assets/icon.jpeg");
 
     let image = image::load_from_memory(icon_bytes).ok()?;
     let rgba = image.into_rgba8();
     let (width, height) = rgba.dimensions();
     let rgba_bytes = rgba.into_raw();
+
     iced::window::icon::from_rgba(rgba_bytes, width, height).ok()
 }
 
@@ -31,14 +33,13 @@ fn init_app() {
     user_config_dir.push("ssy-music");
 
     if !user_config_dir.exists() {
-        std::fs::create_dir(&user_config_dir).unwrap();
+        std::fs::create_dir_all(&user_config_dir).unwrap();
     }
 
-    let taeget_file = user_config_dir.join("config.toml");
+    let target_file = user_config_dir.join("config.toml");
 
-    if !taeget_file.exists() {
+    if !target_file.exists() {
         let log_path = user_config_dir.join("log.log");
-
         let load_db_path = user_config_dir.join("music_db.toml");
 
         std::fs::write(
@@ -54,25 +55,19 @@ duration = 282.83 # 时长 s"#,
         )
         .unwrap();
 
-        let log_path_config = format!("log_path=\"{}\" # log文件路径", log_path.to_string_lossy());
+        let log_path_config = format!("log_path = {:?}", log_path.to_string_lossy());
+        let load_db_config = format!("load_db_path = {:?}", load_db_path.to_string_lossy());
 
-        let load_db_config = format!(
-            "load_db_path=\"{}\" # 本地数据量路径",
-            load_db_path.to_string_lossy()
+        let default_config = format!(
+            "{}\n{}\n{}\n{}\n{}",
+            log_path_config,
+            load_db_config,
+            r#"lyrics_path = "歌词的目录" # 歌词的存放目录"#,
+            r#"play_mode = "Load" # 播放模式 Load(本地) Net(网络)"#,
+            r#"net_link = "127.0.0.1:3000" # 网络播放的api链接,只能用配套的server"#
         );
 
-        std::fs::write(
-            &taeget_file,
-            format!(
-                "{}\n{}\n{}\n{}\n{}",
-                log_path_config,
-                load_db_config,
-                "lyrics_path = \"歌词的目录\" # 歌词的存放目录",
-                "play_mode = \"Load\" # 播放模式 Load(本地) Net(网络)",
-                "net_link = \"127.0.0.1:3000\" # 网络播放的api链接,只能用配套的server"
-            ),
-        )
-        .unwrap();
+        std::fs::write(&target_file, default_config).unwrap();
     }
 }
 
