@@ -32,7 +32,7 @@ fn blur(data: Vec<u8>) -> iced::widget::image::Handle {
 impl BackGroundImage {
     /// 创建
     pub fn new() -> Self {
-        let image = include_bytes!("/home/eternity/Music/专辑图片/无法解析:未知.jpeg").to_vec();
+        let image = include_bytes!("../../../assets/icon.jpeg").to_vec();
         let image_handle = blur(image.clone());
         Self {
             image_data: image,
