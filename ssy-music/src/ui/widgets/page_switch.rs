@@ -1,7 +1,9 @@
 use iced::widget::button;
 
+/// 页面切换组件
 pub struct PageSwitch {}
 
+/// 消息
 #[derive(Debug, Clone)]
 pub enum PageSwitchMessage {
     Left,
@@ -9,12 +11,15 @@ pub enum PageSwitchMessage {
 }
 
 impl PageSwitch {
+    /// 创建
     pub fn new() -> Self {
         Self {}
     }
 
+    /// 更新
     pub fn update() {}
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'_, PageSwitchMessage> {
         let left = iced::widget::container(
             button(
@@ -116,6 +121,7 @@ impl PageSwitch {
 }
 
 impl Default for PageSwitch {
+    /// 应付
     fn default() -> Self {
         Self::new()
     }

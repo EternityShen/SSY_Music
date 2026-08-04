@@ -375,6 +375,8 @@ impl App {
                 self.background.update(message);
             }
 
+            // -------------------------------------------------------------------------
+            // 页面切换
             AppMessage::PageSwitch(message) => match message {
                 widgets::page_switch::PageSwitchMessage::Left => match self.page {
                     Page::Home => {
