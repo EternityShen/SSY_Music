@@ -13,7 +13,7 @@ impl HomePage {
         user_config_dir.push("ssy-music");
 
         Self {
-            title: "Welcome! Syy-Music".to_string(),
+            title: "Welcome! Ssy-Music".to_string(),
             help: user_config_dir.to_string_lossy().to_string(),
         }
     }

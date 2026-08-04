@@ -39,7 +39,7 @@ impl PageSwitch {
             .style(|_theme, status| match status {
                 button::Status::Active => button::Style {
                     background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.2, 0.2, 0.2, 0.2,
+                        0.2, 0.2, 0.2, 0.0,
                     ))),
                     text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
                     border: iced::Border::default(),
@@ -93,7 +93,7 @@ impl PageSwitch {
             .style(|_theme, status| match status {
                 button::Status::Active => button::Style {
                     background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.2, 0.2, 0.2, 0.2,
+                        0.2, 0.2, 0.2, 0.0,
                     ))),
                     text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
                     border: iced::Border::default(),

@@ -19,6 +19,14 @@
 
 ---
 
+### 运行效果图
+
+![home](./Photo/2.png)
+![list](./Photo/1.png)
+![player](./Photo/0.png)
+
+---
+
 ## 🚀 快速开始
 
 ### 1. 服务端配置与启动 (Server)
@@ -70,12 +78,6 @@ cargo run -p ssy-music --release
 ```
 
 > **说明**：首次运行时，客户端会自动在用户目录下生成配置文件和本地数据库文件 `~/.config/ssy-music/config.toml` , `~/.config/ssy-music/music_db.toml` 。
-
-### 各页面的效果图
-
-![home](./Photo/3.png)
-![list](./Photo/1.png)
-![player](./Photo/0.png)
 
 ---
 
