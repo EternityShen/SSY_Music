@@ -62,7 +62,7 @@ cargo run -p server --release
 
 ```
 
-### 2. 客户端安装与运行 (SSY-Music)
+### 客户端安装与运行 (SSY-Music)
 
 ```bash
 cargo run -p ssy-music --release
@@ -71,6 +71,11 @@ cargo run -p ssy-music --release
 
 > **说明**：首次运行时，客户端会自动在用户目录下生成配置文件和本地数据库文件 `~/.config/ssy-music/config.toml` , `~/.config/ssy-music/music_db.toml` 。
 
+### 各页面的效果图
+
+![home](./Photo/3.png)
+![list](./Photo/1.png)
+![player](./Photo/0.png)
 
 ---
 
