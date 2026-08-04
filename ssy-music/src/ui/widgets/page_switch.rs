@@ -21,10 +21,18 @@ impl PageSwitch {
 
     /// 渲染
     pub fn view(&self) -> iced::Element<'_, PageSwitchMessage> {
+        let left_svg = include_bytes!("../../../assets/left.svg");
+        let right_svg = include_bytes!("../../../assets/right.svg");
         let left = iced::widget::container(
             button(
-                iced::widget::container(iced::widget::text("左").size(20))
-                    .center_y(iced::Length::Fill),
+                iced::widget::container(
+                    iced::widget::svg(iced::widget::svg::Handle::from_memory(left_svg))
+                        .style(|_, _| iced::widget::svg::Style {
+                            color: Some(iced::Color::from_rgb(1.0, 1.0, 1.0)),
+                        })
+                        .width(20),
+                )
+                .center_y(iced::Length::Fill),
             )
             .height(80)
             .on_press(PageSwitchMessage::Left)
@@ -71,8 +79,14 @@ impl PageSwitch {
 
         let right = iced::widget::container(
             button(
-                iced::widget::container(iced::widget::text("右").size(20))
-                    .center_y(iced::Length::Fill),
+                iced::widget::container(
+                    iced::widget::svg(iced::widget::svg::Handle::from_memory(right_svg))
+                        .style(|_, _| iced::widget::svg::Style {
+                            color: Some(iced::Color::from_rgb(1.0, 1.0, 1.0)),
+                        })
+                        .width(20),
+                )
+                .center_y(iced::Length::Fill),
             )
             .height(80)
             .on_press(PageSwitchMessage::Right)

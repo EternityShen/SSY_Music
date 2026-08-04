@@ -6,7 +6,7 @@ description = "A lightweight music player built with Rust and Iced"
 license = "AGPL-3.0-only"
 
 [dependencies]
-iced = {version = "0.14.0", features = ["canvas","image","tokio","advanced"]}
+iced = {version = "0.14.0", features = ["canvas","image","tokio","advanced", "svg"]}
 logger = {workspace = true}
 tokio = {workspace = true}
 toml = {workspace = true}
