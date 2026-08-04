@@ -182,6 +182,7 @@ pub struct App {
     music_list_page: pages::music_list::MusicListPage,
     home_page: pages::home::HomePage,
     page: Page,
+    page_switch: widgets::page_switch::PageSwitch,
     player_page: pages::player::PlayerPage,
     player_manger: PlayerManger,
 }
@@ -189,6 +190,7 @@ pub struct App {
 /// 消息
 pub enum AppMessage {
     BackGroundMessage(widgets::background_image::BackGroundImageMessage),
+    PageSwitch(widgets::page_switch::PageSwitchMessage),
     MusicListMessage(pages::music_list::MusicListPageMessage),
     PlayerPageMessage(pages::player::PlayerPageMessage),
     HomePageMessage(pages::home::HomePageMessage),
@@ -347,6 +349,7 @@ impl App {
         let background = widgets::background_image::BackGroundImage::default();
         let music_list_page = pages::music_list::MusicListPage::new();
         let player_page = pages::player::PlayerPage::default();
+        let page_switch = widgets::page_switch::PageSwitch::default();
         let home_page = pages::home::HomePage::default();
         let player_manger = PlayerManger::new(&config.load_db_path, &config.lyrics_path);
 
@@ -356,6 +359,7 @@ impl App {
             background,
             music_list_page,
             home_page,
+            page_switch,
             page: Page::Home,
             player_page,
             player_manger,
@@ -370,6 +374,31 @@ impl App {
             AppMessage::BackGroundMessage(message) => {
                 self.background.update(message);
             }
+
+            AppMessage::PageSwitch(message) => match message {
+                widgets::page_switch::PageSwitchMessage::Left => match self.page {
+                    Page::Home => {
+                        self.page = Page::Player;
+                    }
+                    Page::MusicList => {
+                        self.page = Page::Home;
+                    }
+                    Page::Player => {
+                        self.page = Page::MusicList;
+                    }
+                },
+                widgets::page_switch::PageSwitchMessage::Right => match self.page {
+                    Page::Home => {
+                        self.page = Page::MusicList;
+                    }
+                    Page::MusicList => {
+                        self.page = Page::Player;
+                    }
+                    Page::Player => {
+                        self.page = Page::Home;
+                    }
+                },
+            },
 
             // -------------------------------------------------------------------------
             // 页面
@@ -557,6 +586,7 @@ impl App {
     /// 渲染
     pub fn view(&self) -> iced::Element<'_, AppMessage> {
         let background = self.background.view().map(AppMessage::BackGroundMessage);
+        let page_switch = self.page_switch.view().map(AppMessage::PageSwitch);
         let middle_layer = iced::widget::container(iced::widget::space::horizontal())
             .width(iced::Length::Fill)
             .height(iced::Length::Fill)
@@ -568,18 +598,18 @@ impl App {
         match self.page {
             Page::Home => {
                 let home_page = self.home_page.view().map(AppMessage::HomePageMessage);
-                iced::widget::stack!(background, middle_layer, home_page).into()
+                iced::widget::stack!(background, middle_layer, page_switch, home_page).into()
             }
             Page::Player => {
                 let player_page = self.player_page.view().map(AppMessage::PlayerPageMessage);
-                iced::widget::stack!(background, middle_layer, player_page).into()
+                iced::widget::stack!(background, middle_layer, page_switch, player_page).into()
             }
             Page::MusicList => {
                 let music_list = self
                     .music_list_page
                     .view()
                     .map(AppMessage::MusicListMessage);
-                iced::widget::stack!(background, middle_layer, music_list).into()
+                iced::widget::stack!(background, middle_layer, page_switch, music_list).into()
             }
         }
     }

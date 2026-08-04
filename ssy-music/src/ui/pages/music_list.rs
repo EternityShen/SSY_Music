@@ -36,16 +36,12 @@ impl MusicListPage {
         message: MusicListPageMessage,
     ) -> (iced::Task<MusicListPageMessage>, Option<MusicListPageEvent>) {
         match message {
-            MusicListPageMessage::OnPress(message) => {
-                if let ListItemMessage::OnPress(id) = message {
-                    (
-                        iced::Task::none(),
-                        Some(MusicListPageEvent::SongSelected(id)),
-                    )
-                } else {
-                    (iced::Task::none(), None)
-                }
-            }
+            MusicListPageMessage::OnPress(message) => match message {
+                ListItemMessage::OnPress(id) => (
+                    iced::Task::none(),
+                    Some(MusicListPageEvent::SongSelected(id)),
+                ),
+            },
             MusicListPageMessage::FetchSongs => (
                 iced::Task::none(),
                 Some(MusicListPageEvent::RefreshRequested),
