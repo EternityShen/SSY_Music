@@ -68,8 +68,10 @@ impl PlayerManger {
         let _ = self
             .playersender
             .clone()
+            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
             .unwrap()
             .try_send(super::event::player::PlayerEvent::PlayPath(path));
+        self.is_play = true;
     }
 
     /// 下一首的id
