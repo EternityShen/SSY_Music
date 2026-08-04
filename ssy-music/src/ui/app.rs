@@ -269,9 +269,11 @@ async fn get_lyric_data(api: std::sync::Arc<api::request::MusicClient>, id: u64)
 impl App {
     /// 网络更新歌曲的Task,由于是纯逻辑,所以提出一个函数
     fn updata_song_net(
+        &mut self,
         api: std::sync::Arc<api::request::MusicClient>,
         id: u64,
     ) -> iced::Task<AppMessage> {
+        self.player_manger.playing_id = id;
         let get_song_bytes =
             iced::Task::perform(get_song_bytes(api.clone(), id), AppMessage::SongBytes);
         let get_image_bytes =
@@ -290,6 +292,8 @@ impl App {
 
     /// 本地更新歌曲的逻辑
     fn updata_song_load(&mut self, id: u64) {
+        self.player_manger.playing_id = id;
+
         let image_path = self.player_manger.load_data.get_image_path(id).unwrap();
         let song_data = self.player_manger.load_data.get_song_data(id).unwrap();
 
@@ -395,7 +399,7 @@ impl App {
                         pages::music_list::MusicListPageEvent::SongSelected(id) => {
                             match self.play_mode {
                                 PlayMode::Net => {
-                                    let song_task = App::updata_song_net(self.api.clone(), id);
+                                    let song_task = self.updata_song_net(self.api.clone(), id);
                                     return iced::Task::batch(vec![song_task, page_task]);
                                 }
                                 PlayMode::Load => {
@@ -514,7 +518,7 @@ impl App {
 
                     match self.play_mode {
                         PlayMode::Net => {
-                            return App::updata_song_net(self.api.clone(), id);
+                            return self.updata_song_net(self.api.clone(), id);
                         }
                         PlayMode::Load => {
                             self.updata_song_load(id);
