@@ -9,6 +9,7 @@ use spectrum_analyzer::windows::hann_window;
 use spectrum_analyzer::{FrequencyLimit, samples_fft_to_spectrum};
 
 use super::pages;
+use super::player_manger;
 use super::widgets;
 use crate::api;
 use crate::ui::event;
@@ -17,154 +18,6 @@ use crate::ui::event;
 enum PlayMode {
     Net,
     Load,
-}
-
-/// Player的管理者
-struct PlayerManger {
-    playersender: Option<iced::futures::channel::mpsc::Sender<super::event::player::PlayerEvent>>,
-    load_data: api::load::LoadDate,
-    playing_id: u64,
-    volume: f32,
-    list_num: u64,
-    play_time: u64,
-    is_play: bool,
-}
-
-impl PlayerManger {
-    fn new(db_path: &str, lyrics_path: &str) -> Self {
-        let load_data = api::load::LoadDate::load_data_from_toml(db_path, lyrics_path);
-        Self {
-            playersender: None,
-            load_data,
-            playing_id: 0,
-            volume: 1.0,
-            list_num: 0,
-            play_time: 0,
-            is_play: false,
-        }
-    }
-
-    /// 设置 sender
-    fn set_sender(
-        &mut self,
-        sender: iced::futures::channel::mpsc::Sender<event::player::PlayerEvent>,
-    ) {
-        self.playersender = Some(sender)
-    }
-
-    /// 播放字节数据
-    fn play_bytes(&mut self, data: Vec<u8>) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::PlayBytes(data));
-        self.is_play = true;
-    }
-
-    /// 播放指定路径的音频
-    fn play_path(&mut self, path: String) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::PlayPath(path));
-        self.is_play = true;
-    }
-
-    /// 下一首的id
-    fn next_id(&mut self) -> u64 {
-        if self.playing_id >= self.list_num {
-            self.playing_id = 0;
-        } else {
-            self.playing_id += 1;
-        }
-        self.playing_id
-    }
-
-    /// 播放
-    fn play(&mut self) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::Play);
-        self.is_play = true;
-    }
-
-    /// 暂停
-    fn pause(&mut self) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::Pause);
-        self.is_play = false;
-    }
-
-    /// 跳转
-    fn seek(&self, time: u64) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::Seek(time));
-    }
-
-    /// 快进5s
-    fn seek_add_5(&self) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::Seek(self.play_time + 5));
-    }
-
-    /// 倒退5s
-    fn seek_subtract_5(&self) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::Seek(
-                self.play_time.saturating_sub(5),
-            ));
-    }
-
-    /// 音量+5%
-    fn volume_add_5(&mut self) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::SetVolume(
-                (self.volume + 0.05).clamp(0.0, 1.0),
-            ));
-
-        self.volume = (self.volume + 0.05).clamp(0.0, 1.0);
-    }
-
-    /// 音量-5%
-    fn volume_subtract_5(&mut self) {
-        let _ = self
-            .playersender
-            .clone()
-            // 服务会在软件启动时启动，sender会在服务启动时set到manger(所以，不可能炸，当然，不排除玄学)
-            .unwrap()
-            .try_send(super::event::player::PlayerEvent::SetVolume(
-                (self.volume - 0.05).clamp(0.0, 1.0),
-            ));
-
-        self.volume = (self.volume - 0.05).clamp(0.0, 1.0);
-    }
 }
 
 /// 页面枚举
@@ -184,7 +37,7 @@ pub struct App {
     page: Page,
     page_switch: widgets::page_switch::PageSwitch,
     player_page: pages::player::PlayerPage,
-    player_manger: PlayerManger,
+    player_manger: player_manger::PlayerManger,
 }
 
 /// 消息
@@ -351,7 +204,8 @@ impl App {
         let player_page = pages::player::PlayerPage::default();
         let page_switch = widgets::page_switch::PageSwitch::default();
         let home_page = pages::home::HomePage::default();
-        let player_manger = PlayerManger::new(&config.load_db_path, &config.lyrics_path);
+        let player_manger =
+            player_manger::PlayerManger::new(&config.load_db_path, &config.lyrics_path);
 
         Self {
             api: api_client,
