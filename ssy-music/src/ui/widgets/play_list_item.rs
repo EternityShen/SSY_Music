@@ -2,7 +2,7 @@ use crate::api;
 use iced::widget::button;
 
 /// 列表项
-pub struct MusicListItem {
+pub struct PlayListItem {
     id: u64,
     title: String,
     artist: String,
@@ -13,11 +13,11 @@ pub struct MusicListItem {
 
 /// 消息
 #[derive(Clone)]
-pub enum MusicListItemMessage {
+pub enum PlayListItemMessage {
     OnPress(u64),
 }
 
-impl MusicListItem {
+impl PlayListItem {
     /// 创建
     pub fn new(data: api::data::Song, image_data: Vec<u8>) -> Self {
         let image = iced::widget::image::Handle::from_bytes(image_data);
@@ -32,14 +32,14 @@ impl MusicListItem {
     }
 
     /// 更新
-    pub fn update(&mut self, message: MusicListItemMessage) {
+    pub fn update(&mut self, message: PlayListItemMessage) {
         match message {
-            MusicListItemMessage::OnPress(_id) => {}
+            PlayListItemMessage::OnPress(_id) => {}
         }
     }
 
     /// 渲染
-    pub fn view(&self) -> iced::Element<'static, MusicListItemMessage> {
+    pub fn view(&self) -> iced::Element<'static, PlayListItemMessage> {
         let album_image = iced::widget::image::Image::new(self.image.clone())
             .width(50)
             .height(50);
@@ -71,7 +71,7 @@ impl MusicListItem {
         button(card)
             .width(iced::Length::Fill)
             .height(70)
-            .on_press(MusicListItemMessage::OnPress(self.id))
+            .on_press(PlayListItemMessage::OnPress(self.id))
             .style(|_theme, status| match status {
                 button::Status::Active => button::Style {
                     background: Some(iced::Background::Color(iced::Color::from_rgba(

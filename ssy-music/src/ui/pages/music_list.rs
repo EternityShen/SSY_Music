@@ -2,17 +2,17 @@ use iced::widget::button;
 
 use crate::api;
 use crate::ui::widgets;
-use crate::ui::widgets::music_list_item::ListItemMessage;
+use crate::ui::widgets::music_list_item::MusicListItemMessage;
 
 /// 音乐列表页面
 pub struct MusicListPage {
-    items: Vec<widgets::music_list_item::ListItem>,
+    items: Vec<widgets::music_list_item::MusicListItem>,
 }
 
 ///  消息
 #[derive(Clone)]
 pub enum MusicListPageMessage {
-    OnPress(ListItemMessage),
+    OnPress(MusicListItemMessage),
     FetchSongs,
     Songs(Vec<(api::data::Song, Vec<u8>)>),
 }
@@ -37,7 +37,7 @@ impl MusicListPage {
     ) -> (iced::Task<MusicListPageMessage>, Option<MusicListPageEvent>) {
         match message {
             MusicListPageMessage::OnPress(message) => match message {
-                ListItemMessage::OnPress(id) => (
+                MusicListItemMessage::OnPress(id) => (
                     iced::Task::none(),
                     Some(MusicListPageEvent::SongSelected(id)),
                 ),
@@ -50,7 +50,7 @@ impl MusicListPage {
                 self.items = data
                     .iter()
                     .map(|(song, image)| {
-                        widgets::music_list_item::ListItem::new(song.clone(), image.clone())
+                        widgets::music_list_item::MusicListItem::new(song.clone(), image.clone())
                     })
                     .collect();
                 (iced::Task::none(), None)
@@ -76,7 +76,9 @@ impl MusicListPage {
                 .iter()
                 .fold(iced::widget::column![].spacing(6), |col, item| {
                     let item_element = item.view().map(|message| match message {
-                        ListItemMessage::OnPress(_id) => MusicListPageMessage::OnPress(message),
+                        MusicListItemMessage::OnPress(_id) => {
+                            MusicListPageMessage::OnPress(message)
+                        }
                     });
                     col.push(item_element)
                 });

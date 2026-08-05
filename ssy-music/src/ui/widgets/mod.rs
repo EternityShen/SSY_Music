@@ -4,5 +4,6 @@ pub mod info;
 pub mod lyric;
 pub mod music_list_item;
 pub mod page_switch;
+pub mod play_list_item;
 pub mod progress_bar;
 pub mod sine_wave_v;
