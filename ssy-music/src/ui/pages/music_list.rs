@@ -2,11 +2,11 @@ use iced::widget::button;
 
 use crate::api;
 use crate::ui::widgets;
-use crate::ui::widgets::list_item::ListItemMessage;
+use crate::ui::widgets::music_list_item::ListItemMessage;
 
 /// 音乐列表页面
 pub struct MusicListPage {
-    items: Vec<widgets::list_item::ListItem>,
+    items: Vec<widgets::music_list_item::ListItem>,
 }
 
 ///  消息
@@ -50,7 +50,7 @@ impl MusicListPage {
                 self.items = data
                     .iter()
                     .map(|(song, image)| {
-                        widgets::list_item::ListItem::new(song.clone(), image.clone())
+                        widgets::music_list_item::ListItem::new(song.clone(), image.clone())
                     })
                     .collect();
                 (iced::Task::none(), None)
