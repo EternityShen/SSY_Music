@@ -1,0 +1,8 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 播放箭头 -->
+  <polygon points="5 3 19 12 5 21 5 3" />
+  <!-- 右下角加号 -->
+  <line x1="19" y1="16" x2="19" y2="22" />
+  <line x1="16" y1="19" x2="22" y2="19" />
+</svg>
+
