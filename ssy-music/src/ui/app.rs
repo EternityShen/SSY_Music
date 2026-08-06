@@ -25,6 +25,7 @@ enum Page {
     Home,
     MusicList,
     Player,
+    PlayList,
 }
 
 /// 整个ui的上帝
@@ -33,6 +34,7 @@ pub struct App {
     play_mode: PlayMode,
     background: widgets::background_image::BackGroundImage,
     music_list_page: pages::music_list::MusicListPage,
+    play_list_page: pages::play_list::PlayListPage,
     home_page: pages::home::HomePage,
     page: Page,
     page_switch: widgets::page_switch::PageSwitch,
@@ -47,8 +49,10 @@ pub enum AppMessage {
     MusicListMessage(pages::music_list::MusicListPageMessage),
     PlayerPageMessage(pages::player::PlayerPageMessage),
     HomePageMessage(pages::home::HomePageMessage),
+    PlayListPageMessage(pages::play_list::PlayListPageMessage),
     KeyPressed(iced::keyboard::Key),
     Songs(Vec<(api::data::Song, Vec<u8>)>),
+    Song((api::data::Song, Vec<u8>)),
     SongBytes(Vec<u8>),
     SongData(api::data::Song),
     ImageData(Option<Vec<u8>>),
@@ -60,8 +64,9 @@ pub enum AppMessage {
 /// 获取音乐列表
 async fn get_list(
     api: std::sync::Arc<api::request::MusicClient>,
+    value: Option<String>,
 ) -> Vec<(api::data::Song, Vec<u8>)> {
-    let songs = api.fetch_songs(None).await.unwrap_or_default();
+    let songs = api.fetch_songs(value).await.unwrap_or_default();
 
     let futures = songs.into_iter().map(|song| {
         let api = api.clone();
@@ -123,6 +128,16 @@ async fn get_lyric_data(api: std::sync::Arc<api::request::MusicClient>, id: u64)
     api.fetch_lyrics(id).await
 }
 
+async fn get_song_and_image(
+    api: std::sync::Arc<api::request::MusicClient>,
+    id: u64,
+) -> (api::data::Song, Vec<u8>) {
+    let song = get_song_data(api.clone(), id).await;
+    let image = get_image_bytes(api.clone(), id).await.unwrap();
+
+    (song, image)
+}
+
 impl App {
     /// 网络更新歌曲的Task,由于是纯逻辑,所以提出一个函数
     fn updata_song_net(
@@ -130,7 +145,10 @@ impl App {
         api: std::sync::Arc<api::request::MusicClient>,
         id: u64,
     ) -> iced::Task<AppMessage> {
-        self.player_manger.playing_id = id;
+        self.player_manger.list.push(id);
+
+        self.player_manger.playing_idx = self.player_manger.get_index_form_id(id).unwrap();
+
         let get_song_bytes =
             iced::Task::perform(get_song_bytes(api.clone(), id), AppMessage::SongBytes);
         let get_image_bytes =
@@ -139,18 +157,19 @@ impl App {
             iced::Task::perform(get_song_data(api.clone(), id), AppMessage::SongData);
         let get_lyric_str =
             iced::Task::perform(get_lyric_data(api.clone(), id), AppMessage::LyricData);
+        let get_song_and_image =
+            iced::Task::perform(get_song_and_image(api.clone(), id), AppMessage::Song);
         iced::Task::batch(vec![
             get_song_bytes,
             get_image_bytes,
             get_song_data,
             get_lyric_str,
+            get_song_and_image,
         ])
     }
 
     /// 本地更新歌曲的逻辑
     fn updata_song_load(&mut self, id: u64) {
-        self.player_manger.playing_id = id;
-
         let image_path = self.player_manger.load_data.get_image_path(id).unwrap();
         let song_data = self.player_manger.load_data.get_song_data(id).unwrap();
 
@@ -159,13 +178,18 @@ impl App {
         self.player_page
             .set_info((song_data.title.clone(), song_data.artist.clone()));
         self.player_page.set_album_image_from_path(image_path);
-        self.player_page.set_album_title(song_data.album);
+        self.player_page.set_album_title(song_data.album.clone());
         self.player_page.set_all_progress(song_data.duration as u64);
-        let bg_image_data = std::fs::read(song_data.image).unwrap_or_default();
+        let image_data = std::fs::read(song_data.image.clone()).unwrap_or_default();
         self.background
             .update(widgets::background_image::BackGroundImageMessage::Set(
-                bg_image_data,
+                image_data.clone(),
             ));
+
+        self.play_list_page
+            .add_item((song_data.clone(), image_data));
+
+        self.player_manger.list.push(id);
 
         let lyric_path = self
             .player_manger
@@ -174,6 +198,8 @@ impl App {
             .join(format!("{}-{}.txt", song_data.title, song_data.artist));
 
         let lyric_str = std::fs::read_to_string(lyric_path).unwrap_or_default();
+
+        self.player_manger.playing_idx = self.player_manger.get_index_form_id(id).unwrap();
 
         self.player_page.set_lyric_data(lyric_str);
     }
@@ -204,6 +230,7 @@ impl App {
         let player_page = pages::player::PlayerPage::default();
         let page_switch = widgets::page_switch::PageSwitch::default();
         let home_page = pages::home::HomePage::default();
+        let play_list_page = pages::play_list::PlayListPage::default();
         let player_manger =
             player_manger::PlayerManger::new(&config.load_db_path, &config.lyrics_path);
 
@@ -213,6 +240,7 @@ impl App {
             background,
             music_list_page,
             home_page,
+            play_list_page,
             page_switch,
             page: Page::Home,
             player_page,
@@ -234,13 +262,16 @@ impl App {
             AppMessage::PageSwitch(message) => match message {
                 widgets::page_switch::PageSwitchMessage::Left => match self.page {
                     Page::Home => {
-                        self.page = Page::Player;
+                        self.page = Page::PlayList;
                     }
                     Page::MusicList => {
                         self.page = Page::Home;
                     }
                     Page::Player => {
                         self.page = Page::MusicList;
+                    }
+                    Page::PlayList => {
+                        self.page = Page::Player;
                     }
                 },
                 widgets::page_switch::PageSwitchMessage::Right => match self.page {
@@ -251,6 +282,9 @@ impl App {
                         self.page = Page::Player;
                     }
                     Page::Player => {
+                        self.page = Page::PlayList;
+                    }
+                    Page::PlayList => {
                         self.page = Page::Home;
                     }
                 },
@@ -264,11 +298,11 @@ impl App {
 
                 if let Some(event) = event {
                     match event {
-                        pages::music_list::MusicListPageEvent::RefreshRequested => {
+                        pages::music_list::MusicListPageEvent::FetchSongs(value) => {
                             match self.play_mode {
                                 PlayMode::Net => {
                                     let fetch_task = iced::Task::perform(
-                                        get_list(self.api.clone()),
+                                        get_list(self.api.clone(), value),
                                         AppMessage::Songs,
                                     );
                                     return iced::Task::batch(vec![page_task, fetch_task]);
@@ -276,10 +310,8 @@ impl App {
                                 PlayMode::Load => {
                                     self.player_manger.load_data.re_load();
                                     let songs_data =
-                                        self.player_manger.load_data.get_all_song_data();
-                                    let song_num = songs_data.len() - 1;
+                                        self.player_manger.load_data.search_songs(value);
                                     self.music_list_page.set_list_data(songs_data);
-                                    self.player_manger.list_num = song_num as u64;
                                 }
                             }
                         }
@@ -291,6 +323,30 @@ impl App {
                                 }
                                 PlayMode::Load => {
                                     self.updata_song_load(id);
+                                }
+                            }
+                        }
+                        pages::music_list::MusicListPageEvent::PlayNext(id) => {
+                            match self.play_mode {
+                                PlayMode::Load => {
+                                    let song =
+                                        self.player_manger.load_data.get_song_data(id).unwrap();
+                                    let image_path =
+                                        self.player_manger.load_data.get_image_path(id).unwrap();
+
+                                    let image_bytes = std::fs::read(image_path).unwrap();
+
+                                    self.play_list_page.add_item((song, image_bytes));
+
+                                    self.player_manger.list.push(id);
+                                }
+                                PlayMode::Net => {
+                                    self.player_manger.list.push(id);
+
+                                    return iced::Task::perform(
+                                        get_song_and_image(self.api.clone(), id),
+                                        AppMessage::Song,
+                                    );
                                 }
                             }
                         }
@@ -314,13 +370,35 @@ impl App {
                 self.home_page.updata(message);
             }
 
+            AppMessage::PlayListPageMessage(message) => {
+                let option = self.play_list_page.update(message);
+                if let Some(event) = option {
+                    match event {
+                        pages::play_list::PlayListEvent::Play(id) => {
+                            match self.play_mode {
+                                PlayMode::Net => {
+                                    return self.updata_song_net(self.api.clone(), id);
+                                }
+                                PlayMode::Load => {
+                                    self.updata_song_load(id);
+                                }
+                            };
+                        }
+                        pages::play_list::PlayListEvent::Delete(id) => {
+                            self.player_manger.remove_index_form_id(id);
+                        }
+                    }
+                }
+            }
+
             // -------------------------------------------------------------------------
             // 键盘
             AppMessage::KeyPressed(key) => match key {
                 iced::keyboard::Key::Named(iced::keyboard::key::Named::Tab) => match self.page {
                     Page::Home => self.page = Page::MusicList,
                     Page::MusicList => self.page = Page::Player,
-                    Page::Player => self.page = Page::MusicList,
+                    Page::Player => self.page = Page::PlayList,
+                    Page::PlayList => self.page = Page::MusicList,
                 },
                 iced::keyboard::Key::Named(iced::keyboard::key::Named::ArrowLeft) => {
                     self.player_manger.seek_subtract_5();
@@ -355,8 +433,6 @@ impl App {
                             songs.clone(),
                         ));
 
-                self.player_manger.list_num = (songs.len() - 1) as u64;
-
                 return task.map(AppMessage::MusicListMessage);
             }
 
@@ -384,6 +460,11 @@ impl App {
             AppMessage::LyricData(data) => {
                 let lyric_str = data.unwrap_or_default();
                 self.player_page.set_lyric_data(lyric_str);
+            }
+
+            AppMessage::Song(data) => {
+                self.player_manger.list.push(data.0.id);
+                self.play_list_page.add_item(data);
             }
 
             // -------------------------------------------------------------------------
@@ -466,6 +547,13 @@ impl App {
                     .view()
                     .map(AppMessage::MusicListMessage);
                 iced::widget::stack!(background, middle_layer, music_list, page_switch).into()
+            }
+            Page::PlayList => {
+                let play_list = self
+                    .play_list_page
+                    .view()
+                    .map(AppMessage::PlayListPageMessage);
+                iced::widget::stack!(background, middle_layer, play_list, page_switch).into()
             }
         }
     }

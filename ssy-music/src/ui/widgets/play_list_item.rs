@@ -3,7 +3,7 @@ use iced::widget::button;
 
 /// 列表项
 pub struct PlayListItem {
-    id: u64,
+    pub id: u64,
     title: String,
     artist: String,
     album: String,
@@ -15,6 +15,7 @@ pub struct PlayListItem {
 #[derive(Clone)]
 pub enum PlayListItemMessage {
     OnPress(u64),
+    Delete(u64),
 }
 
 impl PlayListItem {
@@ -35,6 +36,7 @@ impl PlayListItem {
     pub fn update(&mut self, message: PlayListItemMessage) {
         match message {
             PlayListItemMessage::OnPress(_id) => {}
+            PlayListItemMessage::Delete(_index) => {}
         }
     }
 
@@ -68,7 +70,7 @@ impl PlayListItem {
             .spacing(10);
 
         // 让卡片可点击
-        button(card)
+        let card_button = button(card)
             .width(iced::Length::Fill)
             .height(70)
             .on_press(PlayListItemMessage::OnPress(self.id))
@@ -109,7 +111,70 @@ impl PlayListItem {
                     shadow: iced::Shadow::default(),
                     snap: true,
                 },
-            })
-            .into()
+            });
+
+        let delete_svg = include_bytes!("../../../assets/delete.svg");
+
+        let delete_button = iced::widget::container(
+            button(
+                iced::widget::svg(iced::widget::svg::Handle::from_memory(delete_svg)).style(
+                    |_theme, _status| iced::widget::svg::Style {
+                        color: Some(iced::Color::from_rgb(1.0, 1.0, 1.0)),
+                    },
+                ),
+            )
+            .width(40)
+            .on_press(PlayListItemMessage::Delete(self.id))
+            .style(|_theme, status| match status {
+                button::Status::Active => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.2, 0.2, 0.2, 0.0,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+                button::Status::Hovered => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.3, 0.3, 0.3, 0.3,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border {
+                        radius: 20.0.into(),
+                        ..Default::default()
+                    },
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+                button::Status::Pressed => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.5, 0.5, 0.5, 0.5,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+                button::Status::Disabled => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.6, 0.6, 0.6, 0.6,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+            }),
+        )
+        .center_y(iced::Length::Fill);
+
+        let delete = iced::widget::row![
+            iced::widget::space::horizontal(),
+            delete_button,
+            iced::widget::space::Space::default().width(10)
+        ];
+
+        iced::widget::stack!(card_button, delete).into()
     }
 }

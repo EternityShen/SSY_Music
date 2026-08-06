@@ -15,6 +15,7 @@ pub struct MusicListItem {
 #[derive(Clone)]
 pub enum MusicListItemMessage {
     OnPress(u64),
+    PlayNext(u64),
 }
 
 impl MusicListItem {
@@ -35,6 +36,7 @@ impl MusicListItem {
     pub fn update(&mut self, message: MusicListItemMessage) {
         match message {
             MusicListItemMessage::OnPress(_id) => {}
+            MusicListItemMessage::PlayNext(_ic) => {}
         }
     }
 
@@ -68,7 +70,7 @@ impl MusicListItem {
             .spacing(10);
 
         // 让卡片可点击
-        button(card)
+        let card_button = button(card)
             .width(iced::Length::Fill)
             .height(70)
             .on_press(MusicListItemMessage::OnPress(self.id))
@@ -109,7 +111,70 @@ impl MusicListItem {
                     shadow: iced::Shadow::default(),
                     snap: true,
                 },
-            })
-            .into()
+            });
+
+        let play_next_svg = include_bytes!("../../../assets/play_next.svg");
+
+        let play_next_button = iced::widget::container(
+            button(
+                iced::widget::svg(iced::widget::svg::Handle::from_memory(play_next_svg)).style(
+                    |_theme, _status| iced::widget::svg::Style {
+                        color: Some(iced::Color::from_rgb(1.0, 1.0, 1.0)),
+                    },
+                ),
+            )
+            .width(40)
+            .on_press(MusicListItemMessage::PlayNext(self.id))
+            .style(|_theme, status| match status {
+                button::Status::Active => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.2, 0.2, 0.2, 0.0,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+                button::Status::Hovered => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.3, 0.3, 0.3, 0.3,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border {
+                        radius: 20.0.into(),
+                        ..Default::default()
+                    },
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+                button::Status::Pressed => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.5, 0.5, 0.5, 0.5,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+                button::Status::Disabled => button::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.6, 0.6, 0.6, 0.6,
+                    ))),
+                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    snap: true,
+                },
+            }),
+        )
+        .center_y(iced::Length::Fill);
+
+        let play_next = iced::widget::row![
+            iced::widget::space::horizontal(),
+            play_next_button,
+            iced::widget::space::Space::default().width(10)
+        ];
+
+        iced::widget::stack!(card_button, play_next).into()
     }
 }

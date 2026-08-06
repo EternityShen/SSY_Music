@@ -7,26 +7,32 @@ use crate::ui::widgets::music_list_item::MusicListItemMessage;
 /// 音乐列表页面
 pub struct MusicListPage {
     items: Vec<widgets::music_list_item::MusicListItem>,
+    input_text: String,
 }
 
 ///  消息
 #[derive(Clone)]
 pub enum MusicListPageMessage {
     OnPress(MusicListItemMessage),
-    FetchSongs,
+    FetchSongs(Option<String>),
     Songs(Vec<(api::data::Song, Vec<u8>)>),
+    InputText(String),
 }
 
 /// 事件
 pub enum MusicListPageEvent {
     SongSelected(u64),
-    RefreshRequested,
+    PlayNext(u64),
+    FetchSongs(Option<String>),
 }
 
 impl MusicListPage {
     /// 创建
     pub fn new() -> Self {
-        Self { items: Vec::new() }
+        Self {
+            items: Vec::new(),
+            input_text: String::new(),
+        }
     }
 
     /// 更新
@@ -41,10 +47,13 @@ impl MusicListPage {
                     iced::Task::none(),
                     Some(MusicListPageEvent::SongSelected(id)),
                 ),
+                MusicListItemMessage::PlayNext(id) => {
+                    (iced::Task::none(), Some(MusicListPageEvent::PlayNext(id)))
+                }
             },
-            MusicListPageMessage::FetchSongs => (
+            MusicListPageMessage::FetchSongs(value) => (
                 iced::Task::none(),
-                Some(MusicListPageEvent::RefreshRequested),
+                Some(MusicListPageEvent::FetchSongs(value)),
             ),
             MusicListPageMessage::Songs(data) => {
                 self.items = data
@@ -54,6 +63,13 @@ impl MusicListPage {
                     })
                     .collect();
                 (iced::Task::none(), None)
+            }
+            MusicListPageMessage::InputText(text) => {
+                self.input_text = text.clone();
+                (
+                    iced::Task::none(),
+                    Some(MusicListPageEvent::FetchSongs(Some(text))),
+                )
             }
         }
     }
@@ -75,11 +91,7 @@ impl MusicListPage {
             self.items
                 .iter()
                 .fold(iced::widget::column![].spacing(6), |col, item| {
-                    let item_element = item.view().map(|message| match message {
-                        MusicListItemMessage::OnPress(_id) => {
-                            MusicListPageMessage::OnPress(message)
-                        }
-                    });
+                    let item_element = item.view().map(MusicListPageMessage::OnPress);
                     col.push(item_element)
                 });
 
@@ -94,68 +106,124 @@ impl MusicListPage {
             .width(iced::Length::Fill)
             .height(iced::Length::Fill);
 
-        let bush = button(iced::widget::text("刷新").size(30))
-            .on_press(MusicListPageMessage::FetchSongs)
-            .style(|_theme, status| match status {
-                button::Status::Active => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.2, 0.2, 0.2, 0.2,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border {
-                        radius: 10.0.into(),
-                        ..Default::default()
+        let bush = iced::widget::container(
+            button(iced::widget::text("刷新").size(20))
+                .on_press(MusicListPageMessage::FetchSongs(Some(
+                    self.input_text.clone(),
+                )))
+                .style(|_theme, status| match status {
+                    button::Status::Active => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.2, 0.2, 0.2, 0.2,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border {
+                            radius: 10.0.into(),
+                            ..Default::default()
+                        },
+                        shadow: iced::Shadow::default(),
+                        snap: true,
                     },
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-                button::Status::Hovered => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.3, 0.3, 0.3, 0.3,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border {
-                        radius: 10.0.into(),
-                        ..Default::default()
+                    button::Status::Hovered => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.3, 0.3, 0.3, 0.3,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border {
+                            radius: 10.0.into(),
+                            ..Default::default()
+                        },
+                        shadow: iced::Shadow::default(),
+                        snap: true,
                     },
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-                button::Status::Pressed => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.5, 0.5, 0.5, 0.5,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border {
-                        radius: 10.0.into(),
-                        ..Default::default()
+                    button::Status::Pressed => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.5, 0.5, 0.5, 0.5,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border {
+                            radius: 10.0.into(),
+                            ..Default::default()
+                        },
+                        shadow: iced::Shadow::default(),
+                        snap: true,
                     },
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-                button::Status::Disabled => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.6, 0.6, 0.6, 0.6,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border {
-                        radius: 10.0.into(),
-                        ..Default::default()
+                    button::Status::Disabled => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.6, 0.6, 0.6, 0.6,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border {
+                            radius: 10.0.into(),
+                            ..Default::default()
+                        },
+                        shadow: iced::Shadow::default(),
+                        snap: true,
                     },
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-            });
+                }),
+        )
+        .center_y(iced::Length::Fill);
 
-        let bush_button = iced::widget::column![
-            iced::widget::space::vertical(),
-            iced::widget::row![
-                iced::widget::space::horizontal(),
-                iced::widget::container(bush)
-            ]
-        ];
+        let text_input = iced::widget::container(
+            iced::widget::text_input("歌名/歌手", &self.input_text)
+                .on_input(MusicListPageMessage::InputText)
+                .size(20)
+                .style(|_theme, status| match status {
+                    iced::widget::text_input::Status::Active => iced::widget::text_input::Style {
+                        background: iced::Background::Color(iced::Color::from_rgba(
+                            0.1, 0.1, 0.1, 0.0,
+                        )),
+                        border: iced::Border {
+                            width: 1.0,
+                            radius: 10.0.into(),
+                            color: iced::Color::from_rgb(0.5, 0.5, 0.5),
+                        },
+                        icon: iced::Color::from_rgba(0.5, 0.5, 0.5, 0.5),
+                        placeholder: iced::Color::from_rgba(0.3, 0.3, 0.3, 0.3),
+                        value: iced::Color::from_rgba(1.0, 1.0, 1.0, 1.0),
+                        selection: iced::Color::from_rgba(0.1, 0.1, 0.1, 0.7),
+                    },
+                    iced::widget::text_input::Status::Hovered => iced::widget::text_input::Style {
+                        background: iced::Background::Color(iced::Color::from_rgba(
+                            0.3, 0.3, 0.3, 0.6,
+                        )),
+                        border: iced::Border {
+                            width: 1.0,
+                            radius: 10.0.into(),
+                            color: iced::Color::from_rgb(0.5, 0.5, 0.5),
+                        },
+                        icon: iced::Color::from_rgba(0.5, 0.5, 0.5, 0.5),
+                        placeholder: iced::Color::from_rgba(0.3, 0.3, 0.3, 0.3),
+                        value: iced::Color::from_rgba(1.0, 1.0, 1.0, 1.0),
+                        selection: iced::Color::from_rgba(0.1, 0.1, 0.1, 0.7),
+                    },
+                    _ => iced::widget::text_input::Style {
+                        background: iced::Background::Color(iced::Color::from_rgba(
+                            0.1, 0.1, 0.1, 0.0,
+                        )),
+                        border: iced::Border {
+                            width: 1.0,
+                            radius: 10.0.into(),
+                            color: iced::Color::from_rgb(0.5, 0.5, 0.5),
+                        },
+                        icon: iced::Color::from_rgba(0.5, 0.5, 0.5, 0.5),
+                        placeholder: iced::Color::from_rgba(0.3, 0.3, 0.3, 0.3),
+                        value: iced::Color::from_rgba(1.0, 1.0, 1.0, 1.0),
+                        selection: iced::Color::from_rgba(0.1, 0.1, 0.1, 0.7),
+                    },
+                }),
+        )
+        .center_y(iced::Length::Fill);
 
-        iced::widget::stack!(scrollable_list, bush_button).into()
+        let top_bar = iced::widget::column![iced::widget::row![
+            iced::widget::space::horizontal(),
+            text_input,
+            bush,
+            iced::widget::space::horizontal()
+        ]]
+        .height(35);
+
+        iced::widget::column![top_bar, scrollable_list].into()
     }
 }
 

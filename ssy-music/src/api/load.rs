@@ -15,7 +15,7 @@ pub struct LoadDate {
 
 impl LoadDate {
     pub fn load_data_from_toml(db_path: &str, lyrics_dir: &str) -> Self {
-        let result = std::fs::read_to_string(&db_path);
+        let result = std::fs::read_to_string(db_path);
         let content = match result {
             Ok(s) => s,
             Err(e) => {
@@ -97,5 +97,29 @@ impl LoadDate {
         let mut songs: Vec<super::data::Song> = self.songs_by_id.values().cloned().collect();
         songs.sort_by_key(|song| song.id);
         songs
+    }
+
+    pub fn search_songs(&self, keyword: Option<String>) -> Vec<super::data::Song> {
+        let all_songs = self.songs_by_id.values();
+
+        let mut list: Vec<super::data::Song> = if let Some(kw) = keyword {
+            let kw_low = kw.to_lowercase();
+
+            all_songs
+                // 搜
+                .filter(|song| {
+                    song.title.to_lowercase().contains(&kw_low)
+                        || song.artist.to_lowercase().contains(&kw_low)
+                        || song.album.to_lowercase().contains(&kw_low)
+                })
+                .cloned()
+                .collect()
+        } else {
+            all_songs.cloned().collect()
+        };
+
+        list.sort_by_key(|s| s.id);
+
+        list
     }
 }

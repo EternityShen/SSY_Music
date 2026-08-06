@@ -6,9 +6,9 @@ pub struct PlayerManger {
     pub playersender:
         Option<iced::futures::channel::mpsc::Sender<super::event::player::PlayerEvent>>,
     pub load_data: api::load::LoadDate,
-    pub playing_id: u64,
+    pub playing_idx: usize,
     pub volume: f32,
-    pub list_num: u64,
+    pub list: Vec<u64>,
     pub play_time: u64,
     pub is_play: bool,
 }
@@ -19,9 +19,9 @@ impl PlayerManger {
         Self {
             playersender: None,
             load_data,
-            playing_id: 0,
+            playing_idx: 0,
             volume: 1.0,
-            list_num: 0,
+            list: Vec::new(),
             play_time: 0,
             is_play: false,
         }
@@ -33,6 +33,20 @@ impl PlayerManger {
         sender: iced::futures::channel::mpsc::Sender<event::player::PlayerEvent>,
     ) {
         self.playersender = Some(sender)
+    }
+
+    pub fn get_id_form_index(&self, index: usize) -> u64 {
+        self.list[index]
+    }
+
+    pub fn get_index_form_id(&self, id: u64) -> Option<usize> {
+        self.list.iter().position(|&item_id| item_id == id)
+    }
+
+    pub fn remove_index_form_id(&mut self, id: u64) {
+        if let Some(pos) = self.list.iter().position(|i| i == &id) {
+            self.list.remove(pos);
+        }
     }
 
     /// 播放字节数据
@@ -59,12 +73,12 @@ impl PlayerManger {
 
     /// 下一首的id
     pub fn next_id(&mut self) -> u64 {
-        if self.playing_id >= self.list_num {
-            self.playing_id = 0;
+        if self.playing_idx >= self.list.len() - 1 {
+            self.playing_idx = 0;
         } else {
-            self.playing_id += 1;
+            self.playing_idx += 1;
         }
-        self.playing_id
+        self.list[self.playing_idx]
     }
 
     /// 播放
