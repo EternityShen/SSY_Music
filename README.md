@@ -21,9 +21,13 @@
 
 ### 运行效果图
 
-![home](./Photo/2.png)
-![list](./Photo/1.png)
-![player](./Photo/0.png)
+![home](./Photo/首页.png)
+![musiclist](./Photo/音乐列表页面.png)
+![musiclist-歌名搜索](./Photo/歌名搜索.png)
+![musiclist-歌手搜索](./Photo/歌手搜索.png)
+![musiclist-专辑搜索](./Photo/专辑搜索.png)
+![player](./Photo/播放器页面.png)
+![playlist](./Photo/播放列表页面.png)
 
 ---
 
