@@ -54,7 +54,7 @@ impl PlayListSongItem {
 
         // 创建音乐信息
         let music_info = iced::widget::column![
-            iced::widget::text(format!("歌名:{}", self.title.clone())).size(20),
+            iced::widget::text(self.title.clone()).size(20),
             iced::widget::row![
                 iced::widget::text(format!("专辑:{}", self.album.clone())).size(15),
                 iced::widget::text(format!("歌手:{}", self.artist)).size(15),
