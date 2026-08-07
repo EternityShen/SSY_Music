@@ -35,14 +35,17 @@ impl PlayerManger {
         self.playersender = Some(sender)
     }
 
+    /// 通过下标获取id
     pub fn get_id_form_index(&self, index: usize) -> u64 {
         self.list[index]
     }
 
+    /// 通过id获取下标
     pub fn get_index_form_id(&self, id: u64) -> Option<usize> {
         self.list.iter().position(|&item_id| item_id == id)
     }
 
+    /// 通过id删除下标
     pub fn remove_index_form_id(&mut self, id: u64) {
         if let Some(pos) = self.list.iter().position(|i| i == &id) {
             self.list.remove(pos);

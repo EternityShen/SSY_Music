@@ -1,20 +1,24 @@
 use crate::ui::widgets;
 
+/// 播放列表页面
 pub struct PlayListPage {
     items: Vec<widgets::play_list_item::PlayListItem>,
     ids: Vec<u64>,
 }
 
+/// 播放列表事件
 pub enum PlayListEvent {
     Play(u64),
     Delete(u64),
 }
 
+/// 消息
 pub enum PlayListPageMessage {
     OnPress(widgets::play_list_item::PlayListItemMessage),
 }
 
 impl PlayListPage {
+    /// 创建
     pub fn new() -> Self {
         Self {
             items: Vec::new(),
@@ -22,6 +26,7 @@ impl PlayListPage {
         }
     }
 
+    /// 更新
     pub fn update(&mut self, message: PlayListPageMessage) -> Option<PlayListEvent> {
         match message {
             PlayListPageMessage::OnPress(message) => match message {
@@ -38,6 +43,7 @@ impl PlayListPage {
         }
     }
 
+    /// 加项
     pub fn add_item(&mut self, data: (crate::api::data::Song, Vec<u8>)) {
         for id in &self.ids {
             if id == &data.0.id {
@@ -49,6 +55,7 @@ impl PlayListPage {
         self.items.push(item);
     }
 
+    /// 渲染
     pub fn view(&self) -> iced::Element<'_, PlayListPageMessage> {
         let list_content =
             self.items
@@ -74,6 +81,7 @@ impl PlayListPage {
 }
 
 impl Default for PlayListPage {
+    /// 应付
     fn default() -> Self {
         Self::new()
     }
