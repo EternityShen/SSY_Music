@@ -387,6 +387,37 @@ impl App {
                         pages::play_list::PlayListEvent::Delete(id) => {
                             self.player_manger.remove_index_form_id(id);
                         }
+                        pages::play_list::PlayListEvent::LoadList(ids) => match self.play_mode {
+                            PlayMode::Load => {
+                                for id in ids {
+                                    let song =
+                                        self.player_manger.load_data.get_song_data(id).unwrap();
+                                    let image_path =
+                                        self.player_manger.load_data.get_image_path(id).unwrap();
+
+                                    let image_bytes = std::fs::read(image_path).unwrap();
+
+                                    self.play_list_page.add_item((song, image_bytes));
+
+                                    self.player_manger.list.push(id);
+                                }
+                            }
+                            PlayMode::Net => {
+                                let mut tasks = Vec::new();
+                                for id in ids {
+                                    self.player_manger.list.push(id);
+
+                                    let task = iced::Task::perform(
+                                        get_song_and_image(self.api.clone(), id),
+                                        AppMessage::Song,
+                                    );
+
+                                    tasks.push(task);
+                                }
+
+                                return iced::Task::batch(tasks);
+                            }
+                        },
                     }
                 }
             }

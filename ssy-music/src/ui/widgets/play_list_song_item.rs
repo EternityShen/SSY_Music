@@ -2,8 +2,8 @@ use crate::api;
 use iced::widget::button;
 
 /// 列表项
-pub struct MusicListItem {
-    id: u64,
+pub struct PlayListSongItem {
+    pub id: u64,
     title: String,
     artist: String,
     album: String,
@@ -12,13 +12,13 @@ pub struct MusicListItem {
 }
 
 /// 消息
-#[derive(Clone)]
-pub enum MusicListItemMessage {
+#[derive(Clone, Debug)]
+pub enum PlayListSongItemMessage {
     OnPress(u64),
-    PlayNext(u64),
+    Delete(u64),
 }
 
-impl MusicListItem {
+impl PlayListSongItem {
     /// 创建
     pub fn new(data: api::data::Song, image_data: Vec<u8>) -> Self {
         let image = iced::widget::image::Handle::from_bytes(image_data);
@@ -33,15 +33,15 @@ impl MusicListItem {
     }
 
     /// 更新
-    pub fn update(&mut self, message: MusicListItemMessage) {
+    pub fn update(&mut self, message: PlayListSongItemMessage) {
         match message {
-            MusicListItemMessage::OnPress(_id) => {}
-            MusicListItemMessage::PlayNext(_ic) => {}
+            PlayListSongItemMessage::OnPress(_id) => {}
+            PlayListSongItemMessage::Delete(_index) => {}
         }
     }
 
     /// 渲染
-    pub fn view(&self) -> iced::Element<'static, MusicListItemMessage> {
+    pub fn view(&self) -> iced::Element<'static, PlayListSongItemMessage> {
         let album_image = iced::widget::image::Image::new(self.image.clone())
             .width(50)
             .height(50);
@@ -73,7 +73,7 @@ impl MusicListItem {
         let card_button = button(card)
             .width(iced::Length::Fill)
             .height(70)
-            .on_press(MusicListItemMessage::OnPress(self.id))
+            .on_press(PlayListSongItemMessage::OnPress(self.id))
             .style(|_theme, status| match status {
                 button::Status::Active => button::Style {
                     background: Some(iced::Background::Color(iced::Color::from_rgba(
@@ -113,18 +113,18 @@ impl MusicListItem {
                 },
             });
 
-        let play_next_svg = include_bytes!("../../../assets/play_next.svg");
+        let delete_svg = include_bytes!("../../../assets/delete.svg");
 
-        let play_next_button = iced::widget::container(
+        let delete_button = iced::widget::container(
             button(
-                iced::widget::svg(iced::widget::svg::Handle::from_memory(play_next_svg)).style(
+                iced::widget::svg(iced::widget::svg::Handle::from_memory(delete_svg)).style(
                     |_theme, _status| iced::widget::svg::Style {
                         color: Some(iced::Color::from_rgb(1.0, 1.0, 1.0)),
                     },
                 ),
             )
             .width(40)
-            .on_press(MusicListItemMessage::PlayNext(self.id))
+            .on_press(PlayListSongItemMessage::Delete(self.id))
             .style(|_theme, status| match status {
                 button::Status::Active => button::Style {
                     background: Some(iced::Background::Color(iced::Color::from_rgba(
@@ -169,12 +169,12 @@ impl MusicListItem {
         )
         .center_y(iced::Length::Fill);
 
-        let play_next = iced::widget::row![
+        let delete = iced::widget::row![
             iced::widget::space::horizontal(),
-            play_next_button,
+            delete_button,
             iced::widget::space::Space::default().width(10)
         ];
 
-        iced::widget::stack!(card_button, play_next).into()
+        iced::widget::stack!(card_button, delete).into()
     }
 }

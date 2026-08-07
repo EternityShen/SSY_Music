@@ -2,18 +2,18 @@ use iced::widget::button;
 
 use crate::api;
 use crate::ui::widgets;
-use crate::ui::widgets::music_list_item::MusicListItemMessage;
+use crate::ui::widgets::music_list_song_item::MusicListSongItemMessage;
 
 /// 音乐列表页面
 pub struct MusicListPage {
-    items: Vec<widgets::music_list_item::MusicListItem>,
+    items: Vec<widgets::music_list_song_item::MusicListSongItem>,
     input_text: String,
 }
 
 ///  消息
 #[derive(Clone)]
 pub enum MusicListPageMessage {
-    OnPress(MusicListItemMessage),
+    OnPress(MusicListSongItemMessage),
     FetchSongs(Option<String>),
     Songs(Vec<(api::data::Song, Vec<u8>)>),
     InputText(String),
@@ -43,11 +43,11 @@ impl MusicListPage {
     ) -> (iced::Task<MusicListPageMessage>, Option<MusicListPageEvent>) {
         match message {
             MusicListPageMessage::OnPress(message) => match message {
-                MusicListItemMessage::OnPress(id) => (
+                MusicListSongItemMessage::OnPress(id) => (
                     iced::Task::none(),
                     Some(MusicListPageEvent::SongSelected(id)),
                 ),
-                MusicListItemMessage::PlayNext(id) => {
+                MusicListSongItemMessage::PlayNext(id) => {
                     (iced::Task::none(), Some(MusicListPageEvent::PlayNext(id)))
                 }
             },
@@ -59,7 +59,10 @@ impl MusicListPage {
                 self.items = data
                     .iter()
                     .map(|(song, image)| {
-                        widgets::music_list_item::MusicListItem::new(song.clone(), image.clone())
+                        widgets::music_list_song_item::MusicListSongItem::new(
+                            song.clone(),
+                            image.clone(),
+                        )
                     })
                     .collect();
                 (iced::Task::none(), None)
