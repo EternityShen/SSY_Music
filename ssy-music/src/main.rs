@@ -36,6 +36,12 @@ fn init_app() {
         std::fs::create_dir_all(&user_config_dir).unwrap();
     }
 
+    let list_dir = user_config_dir.join("list/");
+
+    if !list_dir.exists() {
+        std::fs::create_dir_all(list_dir).unwrap();
+    }
+
     let target_file = user_config_dir.join("config.toml");
 
     if !target_file.exists() {
