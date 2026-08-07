@@ -215,6 +215,19 @@ impl PlayListPage {
             .width(iced::Length::Fill)
             .height(iced::Length::Fill);
 
+        let songlist_list = iced::widget::stack!(
+            iced::widget::container(iced::widget::space::horizontal())
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill)
+                .style(|_theme: &iced::Theme| iced::widget::container::Style {
+                    background: Some(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.6).into()),
+                    ..Default::default()
+                }),
+            scrollable_songlist_list
+        )
+        .width(iced::Length::Fill)
+        .height(iced::Length::Fill);
+
         let save = button(iced::widget::text("save").size(20))
             .on_press(PlayListPageMessage::SaveList)
             .style(|_theme, status| match status {
@@ -359,21 +372,52 @@ impl PlayListPage {
         ];
 
         if self.songlist_o_c {
-            let middle_layer = iced::widget::container(iced::widget::space::horizontal())
+            let middle_layer = button(iced::widget::space::horizontal())
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill)
-                .style(|_theme: &iced::Theme| iced::widget::container::Style {
-                    background: Some(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.4).into()),
-                    ..Default::default()
+                .on_press(PlayListPageMessage::OpenCloseSidebar)
+                .style(|_theme, status| match status {
+                    button::Status::Active => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.6, 0.6, 0.6, 0.2,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border::default(),
+                        shadow: iced::Shadow::default(),
+                        snap: true,
+                    },
+                    button::Status::Hovered => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.6, 0.6, 0.6, 0.2,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border::default(),
+                        shadow: iced::Shadow::default(),
+                        snap: true,
+                    },
+                    button::Status::Pressed => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.6, 0.6, 0.6, 0.2,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border::default(),
+                        shadow: iced::Shadow::default(),
+                        snap: true,
+                    },
+                    button::Status::Disabled => button::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.6, 0.6, 0.6, 0.2,
+                        ))),
+                        text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                        border: iced::Border::default(),
+                        shadow: iced::Shadow::default(),
+                        snap: true,
+                    },
                 });
 
-            iced::widget::stack!(
-                scrollable_play_list,
-                middle_layer,
-                scrollable_songlist_list,
-                button_bar
-            )
-            .into()
+            let sidebar = iced::widget::row![iced::widget::space::horizontal(), songlist_list];
+
+            iced::widget::stack!(scrollable_play_list, middle_layer, sidebar, button_bar).into()
         } else {
             iced::widget::stack!(scrollable_play_list, button_bar).into()
         }
