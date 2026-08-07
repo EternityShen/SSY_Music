@@ -269,46 +269,58 @@ impl PlayListPage {
                 },
             });
 
-        let open_close = button(iced::widget::text("O").size(20))
-            .on_press(PlayListPageMessage::OpenCloseSidebar)
-            .style(|_theme, status| match status {
-                button::Status::Active => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.2, 0.2, 0.2, 0.2,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-                button::Status::Hovered => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.3, 0.3, 0.3, 0.3,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-                button::Status::Pressed => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.5, 0.5, 0.5, 0.5,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-                button::Status::Disabled => button::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.6, 0.6, 0.6, 0.6,
-                    ))),
-                    text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    snap: true,
-                },
-            });
+        let svg_handle = if self.songlist_o_c {
+            iced::widget::svg::Handle::from_memory(include_bytes!("../../../assets/right.svg"))
+        } else {
+            iced::widget::svg::Handle::from_memory(include_bytes!("../../../assets/left.svg"))
+        };
+
+        let open_close = button(iced::widget::svg(svg_handle).style(|_theme, _statue| {
+            iced::widget::svg::Style {
+                color: Some(iced::Color::from_rgb(1.0, 1.0, 1.0)),
+            }
+        }))
+        .on_press(PlayListPageMessage::OpenCloseSidebar)
+        .style(|_theme, status| match status {
+            button::Status::Active => button::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                    0.2, 0.2, 0.2, 0.2,
+                ))),
+                text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                border: iced::Border::default(),
+                shadow: iced::Shadow::default(),
+                snap: true,
+            },
+            button::Status::Hovered => button::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                    0.3, 0.3, 0.3, 0.3,
+                ))),
+                text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                border: iced::Border::default(),
+                shadow: iced::Shadow::default(),
+                snap: true,
+            },
+            button::Status::Pressed => button::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                    0.5, 0.5, 0.5, 0.5,
+                ))),
+                text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                border: iced::Border::default(),
+                shadow: iced::Shadow::default(),
+                snap: true,
+            },
+            button::Status::Disabled => button::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                    0.6, 0.6, 0.6, 0.6,
+                ))),
+                text_color: iced::Color::from_rgb(1.0, 1.0, 1.0),
+                border: iced::Border::default(),
+                shadow: iced::Shadow::default(),
+                snap: true,
+            },
+        })
+        .width(50)
+        .height(33);
 
         let text_input = iced::widget::container(
             iced::widget::text_input("输入歌单名", &self.text_input)
@@ -359,17 +371,7 @@ impl PlayListPage {
                     },
                 }),
         )
-        .width(100);
-
-        let button_bar = iced::widget::column![
-            iced::widget::space::vertical(),
-            iced::widget::row![
-                iced::widget::space::horizontal(),
-                save,
-                open_close,
-                text_input
-            ]
-        ];
+        .width(120);
 
         if self.songlist_o_c {
             let middle_layer = button(iced::widget::space::horizontal())
@@ -417,8 +419,23 @@ impl PlayListPage {
 
             let sidebar = iced::widget::row![iced::widget::space::horizontal(), songlist_list];
 
+            let button_bar = iced::widget::column![
+                iced::widget::space::vertical(),
+                iced::widget::row![
+                    iced::widget::space::horizontal(),
+                    save,
+                    text_input,
+                    open_close,
+                ]
+            ];
+
             iced::widget::stack!(scrollable_play_list, middle_layer, sidebar, button_bar).into()
         } else {
+            let button_bar = iced::widget::column![
+                iced::widget::space::vertical(),
+                iced::widget::row![iced::widget::space::horizontal(), open_close,]
+            ];
+
             iced::widget::stack!(scrollable_play_list, button_bar).into()
         }
     }
